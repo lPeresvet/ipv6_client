@@ -5,6 +5,7 @@ import (
 	"implementation/internal/service"
 	"implementation/internal/service/adapters/linux"
 	"log"
+	"os"
 )
 
 func main() {
@@ -12,7 +13,9 @@ func main() {
 	connectService := service.NewConnectionService(adapter)
 	ctrl := controller.NewConnectionController(connectService)
 
-	err := ctrl.TunnelConnect("kirill")
+	args := os.Args
+
+	err := ctrl.Proceed(args[1:])
 	if err != nil {
 		log.Fatal(err)
 	}
