@@ -1,0 +1,5 @@
+servers:
+  - address: "ip.address"
+    users:
+    - username: "username"
+      password: "qwerty007"
