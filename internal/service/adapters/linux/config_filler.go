@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"implementation/internal/domain/config"
+	"implementation/internal/domain/template"
 	"log"
 	"os"
 	"path"
@@ -46,6 +47,7 @@ func (filler *ConfigFiller) FillConfig(userConfig *config.Config) error {
 	}
 
 	for fileName, fileFiller := range fileFillers {
+		// todo could use different goroutines to fill in parallel
 		if err := fileFiller(userConfig); err != nil {
 			return fmt.Errorf("failed to fill %s: %w", fileName, err)
 		}
@@ -78,16 +80,15 @@ func (filler *ConfigFiller) fillXL2TP_conf(userConfig *config.Config) error {
 
 	for _, server := range userConfig.Servers {
 		for _, user := range server.Users {
-			log.Printf("filling user [%v]", user.Username)
-
 			contains, err := isContainsInFile(file, fmt.Sprintf("[lac %s]", user.Username))
 			if err != nil {
 				return fmt.Errorf("failed to check if contains %s: %w", user.Username, err)
 			}
 
 			if !contains {
-				if err := filler.insertLNSSection(file, user.Username, server.Address); err != nil {
-					return fmt.Errorf("failed to insert lns section: %w", err)
+				log.Printf("insert user [%v] data", user.Username)
+				if err := filler.proceedTemplate(file, user, server.Address, "xl2tp_lac_template.ini"); err != nil {
+					return fmt.Errorf("failed to insert lac section: %w", err)
 				}
 			}
 		}
@@ -96,18 +97,21 @@ func (filler *ConfigFiller) fillXL2TP_conf(userConfig *config.Config) error {
 	return nil
 }
 
-func (filler *ConfigFiller) insertLNSSection(file *os.File, userName, serverAddress string) error {
-	templateFile, err := os.Open(path.Join(filler.templatesPath, "xl2tp_lns_template.ini"))
+func (filler *ConfigFiller) proceedTemplate(file *os.File, userConfig config.UserConfig, serverAddress, templateName string) error {
+	templateFile, err := os.Open(path.Join(filler.templatesPath, templateName))
 	if err != nil {
-		return fmt.Errorf("failed to open xl2tp_lns_template.ini: %w", err)
+		return fmt.Errorf("failed to open xl2tp_lac_template.ini: %w", err)
 	}
+
+	log.Printf("fill template file %s", templateName)
 
 	scanner := bufio.NewScanner(templateFile)
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		line = strings.Replace(line, "%username%", userName, 1)
-		line = strings.Replace(line, "%server_ip%", serverAddress, 1) + "\n"
+		line = strings.Replace(line, template.UsernamePlaceholder, userConfig.Username, -1)
+		line = strings.Replace(line, template.UsernamePlaceholder, userConfig.Password, -1)
+		line = strings.Replace(line, template.ServerIpPlaceholder, serverAddress, -1) + "\n"
 
 		if err := appendToFile(file, line); err != nil {
 			return err
@@ -121,8 +125,43 @@ func (filler *ConfigFiller) insertLNSSection(file *os.File, userName, serverAddr
 	return templateFile.Close()
 }
 
-func (filler *ConfigFiller) fillOPTIONS_l2tp(config *config.Config) error {
+func (filler *ConfigFiller) fillOPTIONS_l2tp(userConfig *config.Config) error {
+	for _, server := range userConfig.Servers {
+		for _, user := range server.Users {
+			if err := filler.fillOneOptionFile(user, server); err != nil {
+				log.Printf("Failed to insert oprion filefor user <%s> %v:", user.Username, err)
+				continue
+			}
+		}
+	}
 	return nil
+}
+
+func (filler *ConfigFiller) fillOneOptionFile(user config.UserConfig, server config.ServerConfig) error {
+	filePath := buildUserOptionsPath(user.Username)
+
+	if isFileExists(filePath) {
+		if err := os.Remove(filePath); err != nil {
+			return fmt.Errorf("failed to delete file <%s> %w", filePath, err)
+		}
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open %s file: %w", filePath, err)
+	}
+
+	defer file.Close()
+
+	if err := filler.proceedTemplate(file, user, server.Address, "options_template.ini"); err != nil {
+		return fmt.Errorf("failed to fill options template: %w", err)
+	}
+
+	return nil
+}
+
+func buildUserOptionsPath(user string) string {
+	return fmt.Sprintf("%s.%s", optionsPath, user)
 }
 
 func (filler *ConfigFiller) fillCHAP_SECRETS(config *config.Config) error {
