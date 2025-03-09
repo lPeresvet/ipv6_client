@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -20,6 +21,8 @@ const (
 )
 
 type FileFiller func(config *config.Config) error
+
+type ParsedSecrets map[string]map[string]string
 
 type ConfigFiller struct {
 	templatesPath string
@@ -164,8 +167,108 @@ func buildUserOptionsPath(user string) string {
 	return fmt.Sprintf("%s.%s", optionsPath, user)
 }
 
-func (filler *ConfigFiller) fillCHAP_SECRETS(config *config.Config) error {
+func (filler *ConfigFiller) fillCHAP_SECRETS(userConfig *config.Config) error {
+	var err error
+	data := make(ParsedSecrets)
+
+	if isFileExists(chapSecretsPath) {
+		data, err = filler.parseSecrets(chapSecretsPath)
+		if err != nil {
+			return fmt.Errorf("failed to parse chap secrets: %w", err)
+		}
+
+		if err := filler.deleteFile(chapSecretsPath); err != nil {
+			return fmt.Errorf("failed to delete file <%s>: %w", chapSecretsPath, err)
+		}
+	}
+
+	for _, server := range userConfig.Servers {
+		for _, user := range server.Users {
+			if _, ok := data[user.Username]; !ok {
+				data[user.Username] = make(map[string]string)
+			}
+			data[user.Username]["*"] = user.Password
+		}
+	}
+
+	return filler.writeConfigToSecrets(data, chapSecretsPath)
+}
+
+func (filler *ConfigFiller) writeConfigToSecrets(secrets ParsedSecrets, filePath string) error {
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open %s file: %w", filePath, err)
+	}
+	defer file.Close()
+
+	for username, passwords := range secrets {
+		for server, password := range passwords {
+			line := fmt.Sprintf("\"%s\" \"%s\" \"%s\" \"*\"\n", username, server, password)
+
+			if _, err := file.WriteString(line); err != nil {
+				return fmt.Errorf("failed to write to file <%s>: %w", filePath, err)
+			}
+		}
+	}
+
 	return nil
+}
+
+func (filler *ConfigFiller) deleteFile(secretsPath string) error {
+	return os.Remove(secretsPath)
+}
+
+func (filler *ConfigFiller) parseSecrets(secretsPath string) (ParsedSecrets, error) {
+	parsed := make(ParsedSecrets)
+
+	file, err := os.OpenFile(secretsPath, os.O_RDONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s file: %w", secretsPath, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if line == "" {
+			continue
+		}
+
+		result := extractFromLine(line)
+
+		if len(result) < 4 {
+			return nil, fmt.Errorf("failed to parse line <%s>: invalid syntax", line)
+		}
+
+		if _, ok := parsed[result[0]]; !ok {
+			parsed[result[0]] = make(map[string]string)
+		}
+		parsed[result[0]][result[1]] = result[2]
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
+}
+
+func extractFromLine(line string) []string {
+	re := regexp.MustCompile(`"([^"]*)"|\*`)
+
+	matches := re.FindAllStringSubmatch(line, -1)
+
+	result := []string{}
+
+	for _, match := range matches {
+		if match[1] == "" {
+			result = append(result, "*")
+		} else {
+			result = append(result, match[1])
+		}
+	}
+	return result
 }
 
 func isFileExists(path string) bool {
