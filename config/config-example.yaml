@@ -1,0 +1,7 @@
+servers:
+  - address: "192.168.170.1"
+    users:
+    - username: "username"
+      password: "qwerty007"
+    - username: "username1"
+      password: "qwerty444"
