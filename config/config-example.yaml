@@ -3,3 +3,5 @@ servers:
     users:
     - username: "username"
       password: "qwerty007"
+    - username: "username1"
+      password: "qwerty444"
