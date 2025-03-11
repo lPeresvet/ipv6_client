@@ -26,10 +26,6 @@ func (service *ConnectionService) Status() connections.ConnectionStatus {
 }
 
 func (service *ConnectionService) StartConnection(username string) error {
-	if service.status == connections.UP {
-		return fmt.Errorf("connection already started")
-	}
-
 	if err := service.connectionProvider.Connect(username); err != nil {
 		service.status = connections.DOWN
 
@@ -42,10 +38,6 @@ func (service *ConnectionService) StartConnection(username string) error {
 }
 
 func (service *ConnectionService) TerminateConnection(username string) error {
-	if service.status == connections.DOWN {
-		return fmt.Errorf("connection already terminated")
-	}
-
 	if err := service.connectionProvider.Disconnect(username); err != nil {
 		service.status = connections.UP
 

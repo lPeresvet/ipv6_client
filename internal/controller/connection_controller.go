@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"implementation/internal/domain/connections"
 )
 
@@ -10,14 +11,26 @@ type ConnectionService interface {
 	Status() connections.ConnectionStatus
 }
 
+type connectionsHandler func(name string) error
+
 type ConnectionController struct {
-	service ConnectionService
+	service           ConnectionService
+	handlersWithNames map[string]connectionsHandler
 }
 
 func NewConnectionController(service ConnectionService) *ConnectionController {
-	return &ConnectionController{
+	controller := &ConnectionController{
 		service: service,
 	}
+
+	handlersWithNames := map[string]connectionsHandler{
+		"connect":    controller.TunnelConnect,
+		"disconnect": controller.TunnelDisconnect,
+	}
+
+	controller.handlersWithNames = handlersWithNames
+
+	return controller
 }
 
 func (c *ConnectionController) TunnelConnect(username string) error {
@@ -30,4 +43,12 @@ func (c *ConnectionController) TunnelDisconnect(username string) error {
 
 func (c *ConnectionController) TunnelStatus() connections.ConnectionStatus {
 	return c.service.Status()
+}
+
+func (c *ConnectionController) Proceed(args []string) error {
+	if len(args) <= 1 {
+		return errors.New("invalid arguments")
+	}
+
+	return c.handlersWithNames[args[0]](args[1])
 }
