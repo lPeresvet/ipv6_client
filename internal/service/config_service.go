@@ -6,7 +6,7 @@ import (
 )
 
 type ConfigProvider interface {
-	ReadConfig() (*config.Config, error)
+	GetConfig(name string) (*config.Config, error)
 }
 
 type ConfigFiller interface {
@@ -18,21 +18,21 @@ type ConfigService struct {
 	configFiller   ConfigFiller
 }
 
-func NewConfigService(provider ConfigProvider, filler ConfigFiller) ConfigService {
-	return ConfigService{
+func NewConfigService(provider ConfigProvider, filler ConfigFiller) *ConfigService {
+	return &ConfigService{
 		configProvider: provider,
 		configFiller:   filler,
 	}
 }
 
 // GetConfig return parsed configuration config.Config
-func (s *ConfigService) GetConfig() (*config.Config, error) {
-	return s.configProvider.ReadConfig()
+func (s *ConfigService) GetConfig(path string) (*config.Config, error) {
+	return s.configProvider.GetConfig(path)
 }
 
 // InitConfig fill config files
-func (s *ConfigService) InitConfig() error {
-	userConfig, err := s.configProvider.ReadConfig()
+func (s *ConfigService) InitConfig(path string) error {
+	userConfig, err := s.configProvider.GetConfig(path)
 	if err != nil {
 		return fmt.Errorf("failed to read config: %w", err)
 	}

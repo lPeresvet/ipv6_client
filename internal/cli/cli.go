@@ -9,10 +9,11 @@ type ClientController interface {
 	StatusProvider
 }
 
-func New(controller ClientController) *CLI {
+func New(controller ClientController, filler ConfigFiller) *CLI {
 	baseCmd := NewCommonAgs()
 	NewConnectCmd(baseCmd.cmd, controller)
 	NewStatusCmd(baseCmd.cmd, controller)
+	NewConfigurerAgs(baseCmd.cmd, filler)
 
 	return &CLI{
 		commonArgs: baseCmd,
