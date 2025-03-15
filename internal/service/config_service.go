@@ -49,5 +49,5 @@ func (s *ConfigService) InitConfig(path string) error {
 		return err
 	}
 
-	return s.demonProvider.StopDemon(xl2tpdDemonName)
+	return s.demonProvider.StartDemon(xl2tpdDemonName)
 }
