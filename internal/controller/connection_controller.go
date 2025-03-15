@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"errors"
 	"implementation/internal/domain/connections"
+	"log"
 )
 
 type ConnectionService interface {
@@ -10,6 +10,7 @@ type ConnectionService interface {
 	TerminateConnection(username string) error
 	Status() connections.ConnectionStatus
 	GetDemonInfo() (*connections.DemonInfo, error)
+	InitDemon() error
 }
 
 type ConnectionController struct {
@@ -31,8 +32,14 @@ func (c *ConnectionController) TunnelConnect(username string) error {
 	}
 
 	if info.Status != connections.DemonActive {
-		return errors.New("connection is not active")
+		log.Println("connection is not active, try to start it...")
+
+		if err := c.service.InitDemon(); err != nil {
+			return err
+		}
 	}
+
+	log.Println("demon is active, connecting...")
 
 	return c.service.StartConnection(username)
 }

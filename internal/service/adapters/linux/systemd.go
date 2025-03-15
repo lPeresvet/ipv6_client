@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"implementation/internal/domain/connections"
 	"implementation/internal/parsers"
-	"log"
 	"os/exec"
 )
 
@@ -18,7 +17,7 @@ func NewSystemdProvider() *SystemdProvider {
 
 func (s *SystemdProvider) StartDemon(demonName string) error {
 	if err := exec.Command("systemctl", "start", demonName).Run(); err != nil {
-		return fmt.Errorf("failed to start demon: %w", err)
+		return fmt.Errorf("failed to start %s demon: %w", demonName, err)
 	}
 
 	return nil
@@ -26,7 +25,7 @@ func (s *SystemdProvider) StartDemon(demonName string) error {
 
 func (s *SystemdProvider) StopDemon(demonName string) error {
 	if err := exec.Command("systemctl", "stop", demonName).Run(); err != nil {
-		return fmt.Errorf("failed to stop demon: %w", err)
+		return fmt.Errorf("failed to stop %s demon: %w", demonName, err)
 	}
 
 	return nil
@@ -38,8 +37,6 @@ func (s *SystemdProvider) DemonStatus(demonName string) (*connections.DemonInfo,
 		return nil, fmt.Errorf("failed to get %s status: %w", demonName, err)
 	}
 
-	log.Printf("<%s>", string(output))
-
 	info, err := parsers.ParseIni(string(output))
 	if err != nil {
 		return nil, err
@@ -48,8 +45,6 @@ func (s *SystemdProvider) DemonStatus(demonName string) (*connections.DemonInfo,
 
 	if val := info[stateFieldName]; val == string(connections.DemonActive) {
 		status = connections.DemonActive
-
-		log.Println("demon is active")
 	}
 
 	return &connections.DemonInfo{Status: status}, nil

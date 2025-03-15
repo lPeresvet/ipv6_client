@@ -5,7 +5,7 @@ import (
 	"implementation/internal/domain/config"
 )
 
-const demonName = "xl2tpd.service"
+const xl2tpdDemonName = "xl2tpd.service"
 
 type ConfigProvider interface {
 	GetConfig(name string) (*config.Config, error)
@@ -36,7 +36,7 @@ func (s *ConfigService) GetConfig(path string) (*config.Config, error) {
 
 // InitConfig fill config files
 func (s *ConfigService) InitConfig(path string) error {
-	if err := s.demonProvider.StopDemon(demonName); err != nil {
+	if err := s.demonProvider.StopDemon(xl2tpdDemonName); err != nil {
 		return err
 	}
 
@@ -49,5 +49,5 @@ func (s *ConfigService) InitConfig(path string) error {
 		return err
 	}
 
-	return s.demonProvider.StopDemon(demonName)
+	return s.demonProvider.StopDemon(xl2tpdDemonName)
 }

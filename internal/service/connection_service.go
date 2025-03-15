@@ -57,8 +57,8 @@ func (service *ConnectionService) TerminateConnection(username string) error {
 	return nil
 }
 
-func (service *ConnectionService) InitDemon(name string) error {
-	return service.demonProvider.StartDemon(name)
+func (service *ConnectionService) InitDemon() error {
+	return service.demonProvider.StartDemon(xl2tpdDemonName)
 }
 
 func (service *ConnectionService) StopDemon(name string) error {
@@ -66,5 +66,5 @@ func (service *ConnectionService) StopDemon(name string) error {
 }
 
 func (service *ConnectionService) GetDemonInfo() (*connections.DemonInfo, error) {
-	return service.demonProvider.DemonStatus(demonName)
+	return service.demonProvider.DemonStatus(xl2tpdDemonName)
 }
