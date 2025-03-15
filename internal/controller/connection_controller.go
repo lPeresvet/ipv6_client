@@ -11,6 +11,7 @@ type ConnectionService interface {
 	Status() connections.ConnectionStatus
 	GetDemonInfo() (*connections.DemonInfo, error)
 	InitDemon() error
+	InitDemonWithRetry() error
 }
 
 type ConnectionController struct {
@@ -34,7 +35,7 @@ func (c *ConnectionController) TunnelConnect(username string) error {
 	if info.Status != connections.DemonActive {
 		log.Println("connection is not active, try to start it...")
 
-		if err := c.service.InitDemon(); err != nil {
+		if err := c.service.InitDemonWithRetry(); err != nil {
 			return err
 		}
 	}

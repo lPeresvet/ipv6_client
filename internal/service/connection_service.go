@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 	"implementation/internal/domain/connections"
+	"log"
+	"time"
 )
 
 type ConnectionProvider interface {
@@ -59,6 +61,37 @@ func (service *ConnectionService) TerminateConnection(username string) error {
 
 func (service *ConnectionService) InitDemon() error {
 	return service.demonProvider.StartDemon(xl2tpdDemonName)
+}
+
+func (service *ConnectionService) InitDemonWithRetry() error {
+	info, err := service.GetDemonInfo()
+	if err != nil {
+		return err
+	}
+	attemptsNumb := 0
+	maxAttemptsNumb := 3
+
+	for info.Status != connections.DemonActive && attemptsNumb < maxAttemptsNumb {
+		attemptsNumb++
+
+		if err := service.demonProvider.StartDemon(xl2tpdDemonName); err != nil {
+			return err
+		}
+
+		log.Print("Trying to start xl2tpd daemon...")
+		time.Sleep(1 * time.Second)
+
+		info, err = service.GetDemonInfo()
+		if err != nil {
+			return err
+		}
+	}
+
+	if info.Status != connections.DemonActive {
+		return fmt.Errorf("failed to start xl2tpd daemon after %v attempts", maxAttemptsNumb)
+	}
+
+	return nil
 }
 
 func (service *ConnectionService) StopDemon(name string) error {
