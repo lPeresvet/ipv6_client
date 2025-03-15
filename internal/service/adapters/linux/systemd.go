@@ -30,7 +30,7 @@ func (s *SystemdProvider) StopDemon(demonName string) error {
 }
 
 func (s *SystemdProvider) DemonStatus(demonName string) (*connections.DemonInfo, error) {
-	output, err := exec.Command("systemctl", "show --no-pager", demonName).Output()
+	output, err := exec.Command("systemctl", "show", "--no-pager", demonName).Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get %s status: %w", demonName, err)
 	}
