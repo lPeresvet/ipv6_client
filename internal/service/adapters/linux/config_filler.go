@@ -83,7 +83,7 @@ func (filler *ConfigFiller) fillXL2TP_conf(userConfig *config.Config) error {
 
 	for _, server := range userConfig.Servers {
 		for _, user := range server.Users {
-			contains, err := isContainsInFile(file, fmt.Sprintf("[lac %s]", user.Username))
+			contains, err := isContainsInFile(xl2tpPath, fmt.Sprintf("[lac %s]", user.Username))
 			if err != nil {
 				return fmt.Errorf("failed to check if contains %s: %w", user.Username, err)
 			}
@@ -119,6 +119,10 @@ func (filler *ConfigFiller) proceedTemplate(file *os.File, userConfig config.Use
 		if err := appendToFile(file, line); err != nil {
 			return err
 		}
+	}
+
+	if err := appendToFile(file, "\n"); err != nil {
+		return err
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -288,7 +292,14 @@ func appendToFile(file *os.File, data string) error {
 	return nil
 }
 
-func isContainsInFile(file *os.File, substring string) (bool, error) {
+func isContainsInFile(path string, substring string) (bool, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		log.Fatalf("failed to open xl2tp.config file: %v", err)
+	}
+
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
