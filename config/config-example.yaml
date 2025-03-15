@@ -5,3 +5,8 @@ servers:
       password: "qwerty007"
     - username: "username1"
       password: "qwerty444"
+
+  - address: "10.254.0.1"
+    users:
+      - username: "username8"
+        password: "qwerty444"

@@ -28,6 +28,7 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector) *ConnectionsCmd 
 	}
 
 	connectCmd.Flags().StringVarP(&username, "username", "u", "", "Account username to use creds")
+	connectCmd.MarkFlagRequired("username")
 
 	disconnectCmd := &cobra.Command{
 		Use:   "disconnect",
@@ -38,6 +39,8 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector) *ConnectionsCmd 
 	}
 
 	disconnectCmd.Flags().StringVarP(&username, "username", "u", "", "Account username to use creds")
+	disconnectCmd.MarkFlagRequired("username")
+
 	baseCmd.AddCommand(connectCmd)
 	baseCmd.AddCommand(disconnectCmd)
 

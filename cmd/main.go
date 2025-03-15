@@ -11,13 +11,15 @@ import (
 
 func main() {
 	adapter := linux.NewLinuxAdapter()
-	connectService := service.NewConnectionService(adapter)
+	demonProvider := linux.NewSystemdProvider()
+
+	connectService := service.NewConnectionService(adapter, demonProvider)
 	ctrl := controller.NewConnectionController(connectService)
 
 	repo := repository.NewFileRepository("")
 
 	filler := linux.NewConfigFiller("config/templates")
-	configService := service.NewConfigService(repo, filler)
+	configService := service.NewConfigService(repo, filler, demonProvider)
 
 	clientCLI := cli.New(ctrl, configService)
 	if err := clientCLI.Execute(); err != nil {
