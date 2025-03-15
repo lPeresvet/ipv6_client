@@ -78,7 +78,7 @@ func (service *ConnectionService) InitDemonWithRetry() error {
 			return err
 		}
 
-		log.Print("Trying to start xl2tpd daemon...")
+		log.Print("Trying to start xl2tpd demon...")
 		time.Sleep(1 * time.Second)
 
 		info, err = service.GetDemonInfo()

@@ -231,7 +231,7 @@ func (filler *ConfigFiller) parseSecrets(secretsPath string) (ParsedSecrets, err
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if line == "" {
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
