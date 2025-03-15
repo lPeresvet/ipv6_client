@@ -3,9 +3,12 @@ package linux
 import (
 	"fmt"
 	"implementation/internal/domain/connections"
+	"implementation/internal/parsers"
 	"log"
 	"os/exec"
 )
+
+const stateFieldName = "ActiveState"
 
 type SystemdProvider struct{}
 
@@ -37,5 +40,17 @@ func (s *SystemdProvider) DemonStatus(demonName string) (*connections.DemonInfo,
 
 	log.Printf("<%s>", string(output))
 
-	return &connections.DemonInfo{}, nil
+	info, err := parsers.ParseIni(string(output))
+	if err != nil {
+		return nil, err
+	}
+	status := connections.DemonInactive
+
+	if val := info[stateFieldName]; val == string(connections.DemonActive) {
+		status = connections.DemonActive
+
+		log.Println("demon is active")
+	}
+
+	return &connections.DemonInfo{Status: status}, nil
 }
