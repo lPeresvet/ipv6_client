@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"golang.org/x/net/context"
 	"io"
 	"log"
@@ -37,6 +36,8 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan string
 			log.Fatalf("Error on accept: %s", err)
 		}
 
+		log.Printf("New connection from %s", conn.RemoteAddr())
+
 		if err := l.HandleConnection(ctx, control, conn); err != nil {
 			return err
 		}
@@ -50,7 +51,7 @@ func (l *UnixSocketListener) HandleConnection(ctx context.Context, control chan 
 		count, err := c.Read(buf)
 		received = append(received, buf[:count]...)
 		if err != nil {
-			fmt.Printf("%s", string(received))
+			log.Printf("%s", string(received))
 			if err != io.EOF {
 				log.Printf("Error on read: %s", err)
 			}
