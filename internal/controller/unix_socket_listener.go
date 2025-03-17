@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 )
 
 const unixSocketName = "/var/run/ipv6-client/notify"
@@ -23,7 +24,7 @@ func NewUnixSocketListener(ifaceService InterfaceService) *UnixSocketListener {
 }
 
 func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan string) error {
-	//os.Remove(unixSocketName)
+	os.Remove(unixSocketName)
 	listener, err := net.Listen("unix", unixSocketName)
 	if err != nil {
 		log.Fatalf("Unable to listen on socket %s: %s", unixSocketName, err)
