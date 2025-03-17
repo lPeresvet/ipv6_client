@@ -70,6 +70,8 @@ func (l *UnixSocketListener) HandleConnection(ctx context.Context, control chan 
 }
 
 func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connections.IfaceEvent, message string) error {
+	log.Printf("Proceed incoming unix message: %s", message)
+
 	command := strings.Split(message, " ")
 
 	if len(command) < 2 {
@@ -84,6 +86,8 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 			Data: command[1],
 		}
 	} else {
+		log.Printf("Received unknown event: %s", command[0])
+
 		return fmt.Errorf("invalid command: %s", message)
 	}
 
