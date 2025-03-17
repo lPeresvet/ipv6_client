@@ -50,8 +50,8 @@ func (l *UnixSocketListener) HandleConnection(ctx context.Context, control chan 
 		buf := make([]byte, 512)
 		count, err := c.Read(buf)
 		received = append(received, buf[:count]...)
+		log.Printf("%s", string(received))
 		if err != nil {
-			log.Printf("%s", string(received))
 			if err != io.EOF {
 				log.Printf("Error on read: %s", err)
 			}
