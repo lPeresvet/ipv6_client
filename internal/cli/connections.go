@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"log"
 )
 
 type ConnectionsCmd struct {
@@ -60,6 +61,8 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		//		log.Fatal(err)
 		//	}
 		//}()
+
+		log.Print("Connecting to prefix provider: %s", username)
 
 		if err := connector.TunnelConnect(username); err != nil {
 			return err
