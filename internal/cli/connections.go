@@ -62,7 +62,7 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		//	}
 		//}()
 
-		log.Printf("Connecting to prefix provider: %s", username)
+		log.Printf("Connecting to prefix provider: %s", *username)
 
 		if err := connector.TunnelConnect(*username); err != nil {
 			return err
