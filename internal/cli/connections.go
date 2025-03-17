@@ -57,12 +57,12 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 	return func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		ch := make(chan *connections.IfaceEvent)
-		go func() {
-			if err := listener.ListenIpUp(ctx, ch); err != nil {
-				close(ch)
-				log.Fatal(err)
-			}
-		}()
+		//go func() {
+		//	if err := listener.ListenIpUp(ctx, ch); err != nil {
+		//		close(ch)
+		//		log.Fatal(err)
+		//	}
+		//}()
 
 		if err := connector.TunnelConnect(username); err != nil {
 			return err
