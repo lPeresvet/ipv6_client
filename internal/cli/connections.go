@@ -23,7 +23,7 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 	connectCmd := &cobra.Command{
 		Use:   "connect",
 		Short: "Connect to ipv6 prefix provider.",
-		RunE:  getConnectHandler(listener, connector, username),
+		RunE:  getConnectHandler(listener, connector, &username),
 	}
 
 	connectCmd.Flags().StringVarP(&username, "username", "u", "", "Account username to use creds")
@@ -51,7 +51,7 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 	}
 }
 
-func getConnectHandler(listener UnixSocketListener, connector Connector, username string) func(cmd *cobra.Command, args []string) error {
+func getConnectHandler(listener UnixSocketListener, connector Connector, username *string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		//ctx := cmd.Context()
 		//ch := make(chan *connections.IfaceEvent)
@@ -64,7 +64,7 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 
 		log.Printf("Connecting to prefix provider: %s", username)
 
-		if err := connector.TunnelConnect(username); err != nil {
+		if err := connector.TunnelConnect(*username); err != nil {
 			return err
 		}
 
