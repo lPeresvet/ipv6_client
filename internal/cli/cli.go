@@ -1,5 +1,9 @@
 package cli
 
+import (
+	"context"
+)
+
 type CLI struct {
 	commonArgs *CommonAgs
 }
@@ -9,9 +13,13 @@ type ClientController interface {
 	StatusProvider
 }
 
-func New(controller ClientController, filler ConfigFiller) *CLI {
+type UnixSocketListener interface {
+	ListenIpUp(ctx context.Context, control chan string) error
+}
+
+func New(controller ClientController, filler ConfigFiller, listener UnixSocketListener) *CLI {
 	baseCmd := NewCommonAgs()
-	NewConnectCmd(baseCmd.cmd, controller)
+	NewConnectCmd(baseCmd.cmd, controller, listener)
 	NewStatusCmd(baseCmd.cmd, controller)
 	NewConfigurerAgs(baseCmd.cmd, filler)
 

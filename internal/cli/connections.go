@@ -16,13 +16,17 @@ type Connector interface {
 	TunnelDisconnect(username string) error
 }
 
-func NewConnectCmd(baseCmd *cobra.Command, connector Connector) *ConnectionsCmd {
+func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSocketListener) *ConnectionsCmd {
 	var username string
 
 	connectCmd := &cobra.Command{
 		Use:   "connect",
 		Short: "Connect to ipv6 prefix provider.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			ch := make(chan string)
+			go listener.ListenIpUp(ctx, ch)
+
 			return connector.TunnelConnect(username)
 		},
 	}

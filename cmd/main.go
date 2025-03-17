@@ -21,7 +21,10 @@ func main() {
 	filler := linux.NewConfigFiller("config/templates")
 	configService := service.NewConfigService(repo, filler, demonProvider)
 
-	clientCLI := cli.New(ctrl, configService)
+	ifaceService := service.NewIfaceService()
+	listener := controller.NewUnixSocketListener(ifaceService)
+
+	clientCLI := cli.New(ctrl, configService, listener)
 	if err := clientCLI.Execute(); err != nil {
 		log.Fatal(err)
 	}
