@@ -39,8 +39,6 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 			log.Fatalf("Error on accept: %s", err)
 		}
 
-		log.Printf("New connection from %s", conn.RemoteAddr())
-
 		if err := l.HandleConnection(ctx, control, conn); err != nil {
 			return err
 		}
@@ -81,9 +79,14 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 	if command[0] == connections.IfaceUpCommand {
 		log.Printf("Received %s event", connections.IfaceUpCommand)
 
+		ipv6address, err := l.InterfaceService.GetIpv6Address(command[1])
+		if err != nil {
+			return err
+		}
+
 		control <- &connections.IfaceEvent{
 			Type: connections.IfaceUpEvent,
-			Data: command[1],
+			Data: ipv6address,
 		}
 	} else {
 		log.Printf("Received unknown event: %s", command[0])
