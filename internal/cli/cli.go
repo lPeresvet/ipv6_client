@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"implementation/internal/domain/connections"
 )
 
 type CLI struct {
@@ -14,7 +15,7 @@ type ClientController interface {
 }
 
 type UnixSocketListener interface {
-	ListenIpUp(ctx context.Context, control chan string) error
+	ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent) error
 }
 
 func New(controller ClientController, filler ConfigFiller, listener UnixSocketListener) *CLI {

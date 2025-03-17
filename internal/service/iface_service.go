@@ -7,5 +7,5 @@ func NewIfaceService() *IfaceService {
 }
 
 func (i IfaceService) GetIpv6Address(interfaceName string) (string, error) {
-	return "some ipv6 address", nil
+	return "2:::9034", nil
 }
