@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const unixSocketName = "/var/run/ipv6-client/notify"
+const unixSocketName = "/var/run/ipv6-client"
 
 type InterfaceService interface {
 	GetIpv6Address(interfaceName string) (string, error)
