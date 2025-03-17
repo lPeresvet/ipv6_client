@@ -76,7 +76,9 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		case <-time.After(5 * time.Second):
 			log.Printf("Tunnel connection failed. Timeout")
 
-			connector.TunnelDisconnect(username)
+			//connector.TunnelDisconnect(username)
+
+			ctx.Done()
 		}
 
 		return nil
