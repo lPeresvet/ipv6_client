@@ -2,7 +2,9 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"implementation/internal/domain/connections"
 	"log"
+	"time"
 )
 
 type ConnectionsCmd struct {
@@ -53,14 +55,14 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 
 func getConnectHandler(listener UnixSocketListener, connector Connector, username *string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		//ctx := cmd.Context()
-		//ch := make(chan *connections.IfaceEvent)
-		//go func() {
-		//	if err := listener.ListenIpUp(ctx, ch); err != nil {
-		//		close(ch)
-		//		log.Fatal(err)
-		//	}
-		//}()
+		ctx := cmd.Context()
+		ch := make(chan *connections.IfaceEvent)
+		go func() {
+			if err := listener.ListenIpUp(ctx, ch); err != nil {
+				close(ch)
+				log.Fatal(err)
+			}
+		}()
 
 		log.Printf("Connecting to prefix provider: %s", *username)
 
@@ -68,18 +70,18 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 			return err
 		}
 
-		//select {
-		//case event := <-ch:
-		//	if event.Type == connections.IfaceUpEvent {
-		//		log.Printf("Tunnel connected. Your ipv6 address: %s", event.Data)
-		//	}
-		//case <-time.After(5 * time.Second):
-		//	log.Printf("Tunnel connection failed. Timeout")
-		//
-		//	//connector.TunnelDisconnect(username)
-		//
-		//	ctx.Done()
-		//}
+		select {
+		case event := <-ch:
+			if event.Type == connections.IfaceUpEvent {
+				log.Printf("Tunnel connected. Your ipv6 address: %s", event.Data)
+			}
+		case <-time.After(5 * time.Second):
+			log.Printf("Tunnel connection failed. Timeout")
+
+			//connector.TunnelDisconnect(username)
+
+			ctx.Done()
+		}
 
 		return nil
 	}
