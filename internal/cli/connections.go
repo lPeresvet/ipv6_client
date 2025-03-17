@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"time"
 )
 
 type ConnectionsCmd struct {
@@ -27,7 +28,12 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 			ch := make(chan string)
 			go listener.ListenIpUp(ctx, ch)
 
-			return connector.TunnelConnect(username)
+			if err := connector.TunnelConnect(username); err != nil {
+				return err
+			}
+
+			time.Sleep(5 * time.Second)
+			return nil
 		},
 	}
 
