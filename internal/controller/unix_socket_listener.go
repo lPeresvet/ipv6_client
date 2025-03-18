@@ -39,9 +39,11 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 			log.Fatalf("Error on accept: %s", err)
 		}
 
-		if err := l.HandleConnection(ctx, control, conn); err != nil {
-			return err
-		}
+		//if err := l.HandleConnection(ctx, control, conn); err != nil {
+		//	return err
+		//}
+		close(control)
+		return nil
 	}
 }
 
