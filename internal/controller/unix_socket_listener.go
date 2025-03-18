@@ -42,10 +42,15 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 		if err := l.HandleConnection(ctx, control, conn); err != nil {
 			return err
 		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		}
 	}
 }
 
-func (l *UnixSocketListener) HandleConnection(ctx context.Context, control chan *connections.IfaceEvent, c net.Conn) error {
+func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *connections.IfaceEvent, c net.Conn) error {
 	received := make([]byte, 0)
 	for {
 		buf := make([]byte, 512)
