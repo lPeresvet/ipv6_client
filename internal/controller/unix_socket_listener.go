@@ -34,7 +34,7 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 	defer listener.Close()
 
 	for {
-		conn, err := listener.Accept()
+		_, err := listener.Accept()
 		if err != nil {
 			log.Fatalf("Error on accept: %s", err)
 		}
