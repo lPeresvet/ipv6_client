@@ -34,16 +34,14 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 	defer listener.Close()
 
 	for {
-		_, err := listener.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			log.Fatalf("Error on accept: %s", err)
 		}
 
-		//if err := l.HandleConnection(ctx, control, conn); err != nil {
-		//	return err
-		//}
-		close(control)
-		return nil
+		if err := l.HandleConnection(ctx, control, conn); err != nil {
+			return err
+		}
 	}
 }
 

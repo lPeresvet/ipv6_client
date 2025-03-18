@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 	"implementation/internal/domain/connections"
 	"log"
 	"time"
@@ -55,7 +56,8 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 
 func getConnectHandler(listener UnixSocketListener, connector Connector, username *string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+		ctx, cancel := context.WithCancel(cmd.Context())
+		defer cancel()
 		ch := make(chan *connections.IfaceEvent)
 		go func() {
 			if err := listener.ListenIpUp(ctx, ch); err != nil {
@@ -68,16 +70,15 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		}
 
 		select {
-		case event := <-ch:
-			if event.Type == connections.IfaceUpEvent {
+		case event, ok := <-ch:
+			if ok && event.Type == connections.IfaceUpEvent {
 				log.Printf("Tunnel connected. Your ipv6 address: %s", event.Data)
 			}
 		case <-time.After(10 * time.Second):
 			log.Printf("Tunnel connection failed. Timeout")
+			log.Printf("Disconnecting...")
 
-			//connector.TunnelDisconnect(username)
-
-			ctx.Done()
+			connector.TunnelDisconnect(*username)
 		}
 
 		return nil
