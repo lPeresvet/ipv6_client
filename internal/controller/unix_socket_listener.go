@@ -79,7 +79,7 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 	if command[0] == connections.IfaceUpCommand {
 		log.Printf("Received %s event", connections.IfaceUpCommand)
 
-		ipv6address, err := l.InterfaceService.GetIpv6Address(command[1])
+		ipv6address, err := l.InterfaceService.GetIpv6Address(strings.Trim(command[1], "\n"))
 		if err != nil {
 			return err
 		}
