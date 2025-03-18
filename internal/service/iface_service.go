@@ -23,9 +23,7 @@ func (i IfaceService) GetIpv6Address(interfaceName string) (string, error) {
 		}
 
 		for _, address := range info.Addresses {
-			log.Printf("Scaning %s ...", address.String())
-
-			if address.IP.To4() == nil {
+			if address.IP.To4() == nil && address.IP.IsLinkLocalUnicast() {
 				return address.IP.String(), nil
 			}
 		}

@@ -3,7 +3,6 @@ package network
 import (
 	"fmt"
 	"implementation/internal/domain/connections"
-	"log"
 	"net"
 )
 
@@ -20,10 +19,7 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 
 	for _, iface := range interfaces {
 		//TODO подобрать битовую маску
-		log.Printf("Check interface %s == %s -> %v", iface.Name, ifaceName, len(ifaceName))
 		if iface.Name == ifaceName {
-			log.Printf("Found ptp interface %s", iface.Name)
-
 			addrs, err := iface.Addrs()
 			if err != nil {
 				return &connections.InterfaceInfo{}, fmt.Errorf("failed to get '%s' addresses: %w", ifaceName, err)
