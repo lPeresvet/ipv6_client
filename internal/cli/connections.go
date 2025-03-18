@@ -72,7 +72,7 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 			if event.Type == connections.IfaceUpEvent {
 				log.Printf("Tunnel connected. Your ipv6 address: %s", event.Data)
 			}
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			log.Printf("Tunnel connection failed. Timeout")
 
 			//connector.TunnelDisconnect(username)
