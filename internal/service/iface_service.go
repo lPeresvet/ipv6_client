@@ -16,7 +16,7 @@ func NewIfaceService() *IfaceService {
 func (i IfaceService) GetIpv6Address(interfaceName string) (string, error) {
 	log.Printf("Get ipv6 address of interface: %s", interfaceName)
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := 0; attempt < 8; attempt++ {
 		info, err := network.GetTunnelInterfaceByName(interfaceName)
 		if err != nil {
 			return "", err

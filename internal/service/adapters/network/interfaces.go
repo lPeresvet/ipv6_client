@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"implementation/internal/domain/connections"
+	"log"
 	"net"
 )
 
@@ -18,6 +19,8 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 	}
 
 	for _, iface := range interfaces {
+		log.Printf("Found interface %s", iface.Name)
+
 		if iface.Flags == net.FlagPointToPoint && iface.Name == ifaceName {
 			addrs, err := iface.Addrs()
 			if err != nil {
