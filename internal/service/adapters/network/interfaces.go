@@ -20,6 +20,7 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 
 	for _, iface := range interfaces {
 		//TODO подобрать битовую маску
+		log.Printf("Check interface %s", iface.Name)
 		if iface.Name == ifaceName {
 			log.Printf("Found ptp interface %s", iface.Name)
 
