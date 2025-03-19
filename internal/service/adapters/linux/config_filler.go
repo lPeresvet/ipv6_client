@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"implementation/internal/domain/config"
 	"implementation/internal/domain/template"
+	"implementation/internal/parsers"
 	"log"
 	"os"
 	"path"
@@ -65,10 +66,10 @@ func (filler *ConfigFiller) fillXL2TP_conf(userConfig *config.Config) error {
 		err  error
 	)
 
-	if !isFileExists(xl2tpPath) {
+	if !parsers.IsFileExists(xl2tpPath) {
 		log.Printf("xl2tp config file %s does not exist", xl2tpPath)
 
-		if err := copyFile(path.Join(filler.templatesPath, "xl2tp_global_template.ini"), xl2tpPath); err != nil {
+		if err := parsers.CopyFile(path.Join(filler.templatesPath, "xl2tp_global_template.ini"), xl2tpPath); err != nil {
 			return fmt.Errorf("failed to copy xl2tp_global_template.ini: %w", err)
 		}
 	}
@@ -83,7 +84,7 @@ func (filler *ConfigFiller) fillXL2TP_conf(userConfig *config.Config) error {
 
 	for _, server := range userConfig.Servers {
 		for _, user := range server.Users {
-			contains, err := isContainsInFile(xl2tpPath, fmt.Sprintf("[lac %s]", user.Username))
+			contains, err := parsers.IsContainsInFile(xl2tpPath, fmt.Sprintf("[lac %s]", user.Username))
 			if err != nil {
 				return fmt.Errorf("failed to check if contains %s: %w", user.Username, err)
 			}
@@ -116,12 +117,12 @@ func (filler *ConfigFiller) proceedTemplate(file *os.File, userConfig config.Use
 		line = strings.Replace(line, template.UsernamePlaceholder, userConfig.Password, -1)
 		line = strings.Replace(line, template.ServerIpPlaceholder, serverAddress, -1) + "\n"
 
-		if err := appendToFile(file, line); err != nil {
+		if err := parsers.AppendToFile(file, line); err != nil {
 			return err
 		}
 	}
 
-	if err := appendToFile(file, "\n"); err != nil {
+	if err := parsers.AppendToFile(file, "\n"); err != nil {
 		return err
 	}
 
@@ -147,7 +148,7 @@ func (filler *ConfigFiller) fillOPTIONS_l2tp(userConfig *config.Config) error {
 func (filler *ConfigFiller) fillOneOptionFile(user config.UserConfig, server config.ServerConfig) error {
 	filePath := buildUserOptionsPath(user.Username)
 
-	if isFileExists(filePath) {
+	if parsers.IsFileExists(filePath) {
 		if err := os.Remove(filePath); err != nil {
 			return fmt.Errorf("failed to delete file <%s> %w", filePath, err)
 		}
@@ -175,7 +176,7 @@ func (filler *ConfigFiller) fillCHAP_SECRETS(userConfig *config.Config) error {
 	var err error
 	data := make(ParsedSecrets)
 
-	if isFileExists(chapSecretsPath) {
+	if parsers.IsFileExists(chapSecretsPath) {
 		data, err = filler.parseSecrets(chapSecretsPath)
 		if err != nil {
 			return fmt.Errorf("failed to parse chap secrets: %w", err)
@@ -273,57 +274,4 @@ func extractFromLine(line string) []string {
 		}
 	}
 	return result
-}
-
-func isFileExists(path string) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-	}
-
-	return false
-}
-
-func appendToFile(file *os.File, data string) error {
-	_, err := file.WriteString(data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func isContainsInFile(path string, substring string) (bool, error) {
-	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
-	if err != nil {
-		log.Fatalf("failed to open xl2tp.config file: %v", err)
-	}
-
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, substring) {
-			return true, nil
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return false, err
-	}
-
-	return false, nil
-}
-
-func copyFile(src, destination string) (err error) {
-	data, err := os.ReadFile(src)
-	if err != nil {
-		log.Fatalf("failed to read src: %v", err)
-	}
-
-	if err := os.WriteFile(destination, data, 0644); err != nil {
-		log.Fatalf("failed to write to target: %v", err)
-	}
-
-	return nil
 }
