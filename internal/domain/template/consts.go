@@ -5,3 +5,7 @@ const (
 	PasswordPlaceholder = "%password%"
 	ServerIpPlaceholder = "%server_ip%"
 )
+
+const (
+	BashShebang = "#!/bin/sh"
+)

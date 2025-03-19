@@ -3,7 +3,8 @@ package connections
 import "net"
 
 const (
-	IfaceUpCommand = "iface-up"
+	IfaceUpCommand    = "iface-up"
+	IfaceUpScriptPath = "/etc/ppp/ip-up"
 )
 
 type EventType string

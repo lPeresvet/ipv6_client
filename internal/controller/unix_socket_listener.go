@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"golang.org/x/net/context"
+	"implementation/internal/domain/config"
 	"implementation/internal/domain/connections"
 	"io"
 	"log"
@@ -11,10 +12,9 @@ import (
 	"strings"
 )
 
-const unixSocketName = "/var/run/ipv6-client"
-
 type InterfaceService interface {
 	GetIpv6Address(interfaceName string) (string, error)
+	PrepareIpUpScript() error
 }
 
 type UnixSocketListener struct {
@@ -26,10 +26,14 @@ func NewUnixSocketListener(ifaceService InterfaceService) *UnixSocketListener {
 }
 
 func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent) error {
-	os.Remove(unixSocketName)
-	listener, err := net.Listen("unix", unixSocketName)
+	if err := l.InterfaceService.PrepareIpUpScript(); err != nil {
+		return fmt.Errorf("failed to prepare ip up script: %w", err)
+	}
+
+	os.Remove(config.UnixSocketName) //TODO проверить, а надо ли это вообще
+	listener, err := net.Listen("unix", config.UnixSocketName)
 	if err != nil {
-		log.Fatalf("Unable to listen on socket %s: %s", unixSocketName, err)
+		log.Fatalf("Unable to listen on socket %s: %s", config.UnixSocketName, err)
 	}
 	defer listener.Close()
 
