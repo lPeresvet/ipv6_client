@@ -30,6 +30,29 @@ func IsContainsInFile(path string, substring string) (bool, error) {
 	return false, nil
 }
 
+func IsContainsLineStartWith(path string, substring string) (bool, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		log.Fatalf("failed to open xl2tp.config file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, substring) {
+			return true, nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func IsFileExists(path string) bool {
 	if _, err := os.Stat(path); err == nil {
 		return true

@@ -46,13 +46,13 @@ func (i IfaceService) PrepareIpUpScript() error {
 		}
 	}
 
-	scriptExists, err := parsers.IsContainsInFile(connections.IfaceUpScriptPath, cmd)
+	scriptExists, err := parsers.IsContainsLineStartWith(connections.IfaceUpScriptPath, cmd)
 	if err != nil {
 		return err
 	}
 
 	if !scriptExists {
-		if err := parsers.AppendToFileByPath(connections.IfaceUpScriptPath, cmd); err != nil {
+		if err := parsers.AppendToFileByPath(connections.IfaceUpScriptPath, cmd+"\n"); err != nil {
 			return err
 		}
 	}
