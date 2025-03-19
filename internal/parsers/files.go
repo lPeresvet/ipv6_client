@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"bufio"
-	"implementation/internal/domain/connections"
 	"log"
 	"os"
 	"strings"
@@ -58,6 +57,8 @@ func AppendToFileByPath(path string, data string) error {
 	if err := AppendToFile(file, data); err != nil {
 		return err
 	}
+
+	return nil
 }
 
 func CopyFile(src, destination string) (err error) {
