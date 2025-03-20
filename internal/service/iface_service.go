@@ -91,8 +91,6 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	// Clean up after the connection is no longer needed.
 	defer c.Close()
 
-	fmt.Printf("hardvare address %v", ifi.HardwareAddr)
-
 	m := &ndp.RouterSolicitation{
 		Options: []ndp.Option{
 			&ndp.LinkLayerAddress{

@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"implementation/internal/domain/connections"
+	"log"
 	"net"
 )
 
@@ -30,6 +31,8 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 					ifaceInfo.Addresses = append(ifaceInfo.Addresses, ip)
 				}
 			}
+
+			log.Printf("hardw anme %v", iface.HardwareAddr)
 
 			break
 		}
