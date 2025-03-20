@@ -85,7 +85,7 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	}
 
 	// Set up an *ndp.Conn, bound to this interface's link-local IPv6 address.
-	c, _, err := ndp.Listen(ifi, ndp.LinkLocal)
+	c, _, err := ndp.Listen(ifi, ndp.Global)
 	if err != nil {
 		return fmt.Errorf("failed to dial NDP connection: %v", err)
 	}
