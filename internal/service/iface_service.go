@@ -92,12 +92,7 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	defer c.Close()
 
 	m := &ndp.RouterSolicitation{
-		Options: []ndp.Option{
-			&ndp.LinkLayerAddress{
-				Direction: ndp.Source,
-				Addr:      ifi.HardwareAddr,
-			},
-		},
+		Options: []ndp.Option{},
 	}
 
 	// Send to the "IPv6 link-local all routers" multicast group and wait
