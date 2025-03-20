@@ -9,7 +9,9 @@ import (
 	"implementation/internal/domain/template"
 	"implementation/internal/parsers"
 	"implementation/internal/service/adapters/network"
+	"log"
 	"net"
+	"net/netip"
 	"os"
 	"time"
 )
@@ -83,24 +85,14 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	}
 
 	// Set up an *ndp.Conn, bound to this interface's link-local IPv6 address.
-	c, ip, err := ndp.Listen(ifi, ndp.LinkLocal)
+	c, _, err := ndp.Listen(ifi, ndp.LinkLocal)
 	if err != nil {
 		return fmt.Errorf("failed to dial NDP connection: %v", err)
 	}
 	// Clean up after the connection is no longer needed.
 	defer c.Close()
 
-	// Use target's solicited-node multicast address to request that the target
-	// respond with a neighbor advertisement.
-	snm, err := ndp.SolicitedNodeMulticast(ip)
-	if err != nil {
-		return fmt.Errorf("failed to determine solicited-node multicast address: %v", err)
-	}
-
-	// Build a neighbor solicitation message, indicate the target's link-local
-	// address, and also specify our source link-layer address.
-	m := &ndp.NeighborSolicitation{
-		TargetAddress: ip,
+	m := &ndp.RouterSolicitation{
 		Options: []ndp.Option{
 			&ndp.LinkLayerAddress{
 				Direction: ndp.Source,
@@ -109,32 +101,32 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 		},
 	}
 
-	// Send the multicast message and wait for a response.
-	if err := c.WriteTo(m, nil, snm); err != nil {
-		return fmt.Errorf("failed to write neighbor solicitation: %v", err)
+	// Send to the "IPv6 link-local all routers" multicast group and wait
+	// for a response.
+	if err := c.WriteTo(m, nil, netip.IPv6LinkLocalAllRouters()); err != nil {
+		log.Fatalf("failed to write router solicitation: %v", err)
 	}
 	msg, _, from, err := c.ReadFrom()
 	if err != nil {
-		return fmt.Errorf("failed to read NDP message: %v", err)
+		log.Fatalf("failed to read NDP message: %v", err)
 	}
 
-	// Expect a neighbor advertisement message with a target link-layer
-	// address option.
-	na, ok := msg.(*ndp.NeighborAdvertisement)
+	// Expect a router advertisement message.
+	ra, ok := msg.(*ndp.RouterAdvertisement)
 	if !ok {
-		return fmt.Errorf("message is not a neighbor advertisement: %T", msg)
-	}
-	if len(na.Options) != 1 {
-		return fmt.Errorf("expected one option in neighbor advertisement")
-	}
-	tll, ok := na.Options[0].(*ndp.LinkLayerAddress)
-	if !ok {
-		return fmt.Errorf("option is not a link-layer address: %T", msg)
+		log.Fatalf("message is not a router advertisement: %T", msg)
 	}
 
-	fmt.Printf("ndp: neighbor advertisement from %s:\n", from)
-	fmt.Printf("  - solicited: %t\n", na.Solicited)
-	fmt.Printf("  - link-layer address: %s\n", tll.Addr)
+	// Iterate options and display information.
+	fmt.Printf("ndp: router advertisement from %s:\n", from)
+	for _, o := range ra.Options {
+		switch o := o.(type) {
+		case *ndp.PrefixInformation:
+			fmt.Printf("  - prefix %q: SLAAC: %t\n", o.Prefix, o.AutonomousAddressConfiguration)
+		case *ndp.LinkLayerAddress:
+			fmt.Printf("  - link-layer address: %s\n", o.Addr)
+		}
+	}
 
 	return nil
 }
