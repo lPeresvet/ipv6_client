@@ -90,6 +90,51 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	// Clean up after the connection is no longer needed.
 	defer c.Close()
 
-	fmt.Println("ndp: bound to address:", ip)
+	// Use target's solicited-node multicast address to request that the target
+	// respond with a neighbor advertisement.
+	snm, err := ndp.SolicitedNodeMulticast(ip)
+	if err != nil {
+		return fmt.Errorf("failed to determine solicited-node multicast address: %v", err)
+	}
+
+	// Build a neighbor solicitation message, indicate the target's link-local
+	// address, and also specify our source link-layer address.
+	m := &ndp.NeighborSolicitation{
+		TargetAddress: ip,
+		Options: []ndp.Option{
+			&ndp.LinkLayerAddress{
+				Direction: ndp.Source,
+				Addr:      ifi.HardwareAddr,
+			},
+		},
+	}
+
+	// Send the multicast message and wait for a response.
+	if err := c.WriteTo(m, nil, snm); err != nil {
+		return fmt.Errorf("failed to write neighbor solicitation: %v", err)
+	}
+	msg, _, from, err := c.ReadFrom()
+	if err != nil {
+		return fmt.Errorf("failed to read NDP message: %v", err)
+	}
+
+	// Expect a neighbor advertisement message with a target link-layer
+	// address option.
+	na, ok := msg.(*ndp.NeighborAdvertisement)
+	if !ok {
+		return fmt.Errorf("message is not a neighbor advertisement: %T", msg)
+	}
+	if len(na.Options) != 1 {
+		return fmt.Errorf("expected one option in neighbor advertisement")
+	}
+	tll, ok := na.Options[0].(*ndp.LinkLayerAddress)
+	if !ok {
+		return fmt.Errorf("option is not a link-layer address: %T", msg)
+	}
+
+	fmt.Printf("ndp: neighbor advertisement from %s:\n", from)
+	fmt.Printf("  - solicited: %t\n", na.Solicited)
+	fmt.Printf("  - link-layer address: %s\n", tll.Addr)
+
 	return nil
 }
