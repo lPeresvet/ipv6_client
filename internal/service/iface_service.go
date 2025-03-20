@@ -9,6 +9,7 @@ import (
 	"implementation/internal/domain/template"
 	"implementation/internal/parsers"
 	"implementation/internal/service/adapters/network"
+	"log"
 	"net"
 	"net/netip"
 	"os"
@@ -83,44 +84,51 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 		return fmt.Errorf("failed to get interface: %v", err)
 	}
 
-	// Set up an *ndp.Conn, bound to this interface's link-local IPv6 address.
 	c, _, err := ndp.Listen(ifi, ndp.LinkLocal)
 	if err != nil {
 		return fmt.Errorf("failed to dial NDP connection: %v", err)
 	}
-	// Clean up after the connection is no longer needed.
 	defer c.Close()
 
+	if err := proceedROAndRA(c); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func proceedROAndRA(c *ndp.Conn) error {
 	m := &ndp.RouterSolicitation{
 		Options: []ndp.Option{},
 	}
 
-	// Send to the "IPv6 link-local all routers" multicast group and wait
-	// for a response.
 	if err := c.WriteTo(m, nil, netip.IPv6LinkLocalAllRouters()); err != nil {
 		return fmt.Errorf("failed to write router solicitation: %v", err)
 	}
+
 	msg, _, from, err := c.ReadFrom()
 	if err != nil {
 		return fmt.Errorf("failed to read NDP message: %v", err)
 	}
 
-	// Expect a router advertisement message.
 	ra, ok := msg.(*ndp.RouterAdvertisement)
 	if !ok {
 		return fmt.Errorf("message is not a router advertisement: %T", msg)
 	}
 
-	// Iterate options and display information.
-	fmt.Printf("ndp: router advertisement from %s:\n", from)
+	logRA(from, ra)
+
+	return nil
+}
+
+func logRA(from netip.Addr, ra *ndp.RouterAdvertisement) {
+	log.Printf("ndp: router advertisement from %s:\n", from)
 	for _, o := range ra.Options {
 		switch o := o.(type) {
 		case *ndp.PrefixInformation:
-			fmt.Printf("  - prefix %q: SLAAC: %t\n", o.Prefix, o.AutonomousAddressConfiguration)
+			log.Printf("  - prefix %q: SLAAC: %t\n", o.Prefix, o.AutonomousAddressConfiguration)
 		case *ndp.LinkLayerAddress:
-			fmt.Printf("  - link-layer address: %s\n", o.Addr)
+			log.Printf("  - link-layer address: %s\n", o.Addr)
 		}
 	}
-
-	return nil
 }
