@@ -89,7 +89,7 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 	if command[0] == connections.IfaceUpCommand {
 		log.Printf("Received %s event", connections.IfaceUpCommand)
 
-		if err := l.InterfaceService.StartNDPProcedure(command[1]); err != nil {
+		if err := l.InterfaceService.StartNDPProcedure(strings.Trim(command[1], "\n")); err != nil {
 			return fmt.Errorf("failed to start NDP procedure: %w", err)
 		}
 
