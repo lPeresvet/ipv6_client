@@ -9,7 +9,6 @@ import (
 	"implementation/internal/domain/template"
 	"implementation/internal/parsers"
 	"implementation/internal/service/adapters/network"
-	"log"
 	"net"
 	"net/netip"
 	"os"
@@ -85,7 +84,7 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	}
 
 	// Set up an *ndp.Conn, bound to this interface's link-local IPv6 address.
-	c, _, err := ndp.Listen(ifi, ndp.Global)
+	c, _, err := ndp.Listen(ifi, ndp.LinkLocal)
 	if err != nil {
 		return fmt.Errorf("failed to dial NDP connection: %v", err)
 	}
@@ -104,17 +103,17 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	// Send to the "IPv6 link-local all routers" multicast group and wait
 	// for a response.
 	if err := c.WriteTo(m, nil, netip.IPv6LinkLocalAllRouters()); err != nil {
-		log.Fatalf("failed to write router solicitation: %v", err)
+		return fmt.Errorf("failed to write router solicitation: %v", err)
 	}
 	msg, _, from, err := c.ReadFrom()
 	if err != nil {
-		log.Fatalf("failed to read NDP message: %v", err)
+		return fmt.Errorf("failed to read NDP message: %v", err)
 	}
 
 	// Expect a router advertisement message.
 	ra, ok := msg.(*ndp.RouterAdvertisement)
 	if !ok {
-		log.Fatalf("message is not a router advertisement: %T", msg)
+		return fmt.Errorf("message is not a router advertisement: %T", msg)
 	}
 
 	// Iterate options and display information.
