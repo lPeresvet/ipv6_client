@@ -3,11 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/mdlayher/ndp"
 	"implementation/internal/domain/config"
 	"implementation/internal/domain/connections"
 	"implementation/internal/domain/template"
 	"implementation/internal/parsers"
 	"implementation/internal/service/adapters/network"
+	"net"
 	"os"
 	"time"
 )
@@ -18,7 +20,7 @@ func NewIfaceService() *IfaceService {
 	return &IfaceService{}
 }
 
-func (i IfaceService) GetIpv6Address(interfaceName string) (string, error) {
+func (i *IfaceService) GetIpv6Address(interfaceName string) (string, error) {
 	for attempt := 0; attempt < 5; attempt++ {
 		info, err := network.GetTunnelInterfaceByName(interfaceName)
 		if err != nil {
@@ -37,7 +39,7 @@ func (i IfaceService) GetIpv6Address(interfaceName string) (string, error) {
 	return "", errors.New("failed to get ipv6 address")
 }
 
-func (i IfaceService) PrepareIpUpScript() error {
+func (i *IfaceService) PrepareIpUpScript() error {
 	cmd := fmt.Sprintf(`echo "%s $INTERFACE" | nc -U %s`, connections.IfaceUpCommand, config.UnixSocketName)
 
 	if !parsers.IsFileExists(connections.IfaceUpScriptPath) {
@@ -71,5 +73,23 @@ func createFileWithShebang(shebang string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
+	ifi, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return fmt.Errorf("failed to get interface: %v", err)
+	}
+
+	// Set up an *ndp.Conn, bound to this interface's link-local IPv6 address.
+	c, ip, err := ndp.Listen(ifi, ndp.LinkLocal)
+	if err != nil {
+		return fmt.Errorf("failed to dial NDP connection: %v", err)
+	}
+	// Clean up after the connection is no longer needed.
+	defer c.Close()
+
+	fmt.Println("ndp: bound to address:", ip)
 	return nil
 }
