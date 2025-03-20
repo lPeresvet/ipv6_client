@@ -15,6 +15,7 @@ import (
 type InterfaceService interface {
 	GetIpv6Address(interfaceName string) (string, error)
 	PrepareIpUpScript() error
+	StartNDPProcedure(ifaceName string) error
 }
 
 type UnixSocketListener struct {
@@ -87,6 +88,10 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 
 	if command[0] == connections.IfaceUpCommand {
 		log.Printf("Received %s event", connections.IfaceUpCommand)
+
+		if err := l.InterfaceService.StartNDPProcedure(strings.Trim(command[1], "\n")); err != nil {
+			return fmt.Errorf("failed to start NDP procedure: %w", err)
+		}
 
 		ipv6address, err := l.InterfaceService.GetIpv6Address(strings.Trim(command[1], "\n"))
 		if err != nil {

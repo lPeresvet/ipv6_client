@@ -62,6 +62,8 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		go func() {
 			if err := listener.ListenIpUp(ctx, ch); err != nil {
 				close(ch)
+				connector.TunnelDisconnect(*username)
+
 				log.Fatal(err)
 			}
 		}()
