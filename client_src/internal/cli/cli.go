@@ -2,7 +2,7 @@ package cli
 
 import (
 	"context"
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/connections"
 )
 
 type CLI struct {

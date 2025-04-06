@@ -2,8 +2,8 @@ package linux
 
 import (
 	"fmt"
-	"implementation/internal/domain/connections"
-	"implementation/internal/parsers"
+	"implementation/client_src/internal/domain/connections"
+	"implementation/client_src/internal/parsers"
 	"os/exec"
 )
 

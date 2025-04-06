@@ -2,7 +2,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/connections"
 	"log"
 )
 

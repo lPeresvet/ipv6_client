@@ -1,2 +1,6 @@
 #!/bin/bash
-go build -o ./client ./cmd/main.go
+#cleanup previous build
+rm -f ./client
+
+#build client app
+go build -o ./client ./client_src/cmd/main.go

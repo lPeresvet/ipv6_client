@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/connections"
 	"log"
 )
 
