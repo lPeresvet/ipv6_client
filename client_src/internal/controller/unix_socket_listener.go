@@ -3,8 +3,8 @@ package controller
 import (
 	"fmt"
 	"golang.org/x/net/context"
-	"implementation/internal/domain/config"
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/config"
+	"implementation/client_src/internal/domain/connections"
 	"io"
 	"log"
 	"net"

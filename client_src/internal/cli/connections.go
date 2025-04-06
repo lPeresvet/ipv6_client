@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/connections"
 	"log"
 	"time"
 )

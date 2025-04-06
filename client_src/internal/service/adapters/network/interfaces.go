@@ -2,7 +2,7 @@ package network
 
 import (
 	"fmt"
-	"implementation/internal/domain/connections"
+	"implementation/client_src/internal/domain/connections"
 	"net"
 )
 

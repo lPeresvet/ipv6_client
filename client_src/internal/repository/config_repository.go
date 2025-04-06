@@ -2,13 +2,13 @@ package repository
 
 import (
 	"fmt"
+	"implementation/client_src/internal/domain/config"
 	"io"
 	"log"
 	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
-	"implementation/internal/domain/config"
 )
 
 type FileRepository struct {

@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"implementation/internal/domain/config"
+	"implementation/client_src/internal/domain/config"
 )
 
 const xl2tpdDemonName = "xl2tpd.service"
