@@ -3,7 +3,6 @@ package adapter
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -48,11 +47,11 @@ func sendCommand(message string) error {
 	writer := bufio.NewWriter(pipe)
 
 	if _, err = writer.WriteString(message); err != nil {
-		log.Fatalf("failed to write '%s' to l2tp control pipe: %v", message, err)
+		return fmt.Errorf("failed to write '%s' to l2tp control pipe: %v", message, err)
 	}
 
 	if err := writer.Flush(); err != nil {
-		log.Fatalf("failed to flush buffer to l2tp control pipe: %v", err)
+		return fmt.Errorf("failed to flush buffer to l2tp control pipe: %v", err)
 	}
 
 	return nil
