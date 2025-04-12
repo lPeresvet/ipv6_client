@@ -3,6 +3,7 @@ package adapter
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -43,6 +44,8 @@ func sendCommand(message string) error {
 		return fmt.Errorf("failed to open l2tp control pipe: %w", err)
 	}
 	defer pipe.Close()
+
+	log.Printf("sending to l2tp control pipe: %s\n", message)
 
 	writer := bufio.NewWriter(pipe)
 
