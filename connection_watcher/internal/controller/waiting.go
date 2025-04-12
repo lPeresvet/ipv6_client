@@ -83,7 +83,7 @@ func proceedIncomingUnixMessage(message string) (*domain.Connection, error) {
 
 		return &domain.Connection{
 			InterfaceName: command[1],
-			Username:      command[2],
+			Username:      strings.ReplaceAll(command[2], "\n", ""),
 		}, nil
 	}
 
