@@ -1,7 +1,7 @@
 package domain
 
 const (
-	WatcherSocketPath = "/tmp/ipv6_watcher"
+	WatcherSocketPath = "/var/run/ipv6-watcher"
 )
 
 type UnixSocketCommand string
