@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"implementation/connection_watcher/internal/domain"
+	"log"
 )
 
 type ReconnectingTunnel struct {
@@ -29,6 +30,8 @@ func (r *ReconnectingTunnel) Execute(ctx context.Context) domain.State {
 
 		return domain.StateStopped
 	}
+
+	log.Printf("reconnecting tunnel for user %s", connection.Username)
 
 	if err := r.connectionService.Connect(connection.Username); err != nil {
 		return domain.StateStopped
