@@ -27,13 +27,12 @@ func (controller *WaitingController) Wait(ctx context.Context) (*domain.Connecti
 	}
 	defer listener.Close()
 
-	fmt.Printf("Listening for %s\n", domain_consts.WatcherSocketPath)
-
 	conn, err := listener.Accept()
 	fmt.Printf("Connected to %s: %v\n", domain_consts.WatcherSocketPath, err)
 	if err != nil {
 		return nil, fmt.Errorf("error on accept: %s", err)
 	}
+	defer conn.Close()
 
 	return listen(ctx, conn)
 }

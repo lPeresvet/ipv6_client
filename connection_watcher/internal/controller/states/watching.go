@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"implementation/connection_watcher/internal/domain"
+	"log"
 	"time"
 )
 
@@ -43,6 +44,8 @@ func (w *Watching) Execute(ctx context.Context) domain.State {
 
 				return domain.StateStopped
 			}
+
+			log.Printf("%s is %s", connection.InterfaceName, status)
 
 			switch status {
 			case domain.Disconnected:
