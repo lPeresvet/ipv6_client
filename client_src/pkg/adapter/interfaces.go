@@ -12,10 +12,7 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 		return &connections.InterfaceInfo{}, fmt.Errorf("failed to get network interfaces: %w", err)
 	}
 
-	ifaceInfo := connections.InterfaceInfo{
-		Name:      ifaceName,
-		Addresses: make([]*net.IPNet, 0),
-	}
+	addresses := make([]*net.IPNet, 0)
 
 	for _, iface := range interfaces {
 		//TODO подобрать битовую маску
@@ -27,7 +24,7 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 
 			for _, add := range addrs {
 				if ip, ok := add.(*net.IPNet); ok {
-					ifaceInfo.Addresses = append(ifaceInfo.Addresses, ip)
+					addresses = append(addresses, ip)
 				}
 			}
 
@@ -35,5 +32,12 @@ func GetTunnelInterfaceByName(ifaceName string) (*connections.InterfaceInfo, err
 		}
 	}
 
-	return &ifaceInfo, nil
+	if len(addresses) == 0 {
+		return &connections.InterfaceInfo{}, fmt.Errorf("failed to get '%s' interface", ifaceName)
+	}
+
+	return &connections.InterfaceInfo{
+		Name:      ifaceName,
+		Addresses: addresses,
+	}, nil
 }
