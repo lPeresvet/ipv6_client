@@ -2,27 +2,29 @@ package main
 
 import (
 	"implementation/client_src/internal/cli"
-	controller2 "implementation/client_src/internal/controller"
-	"implementation/client_src/internal/repository"
-	service2 "implementation/client_src/internal/service"
-	linux2 "implementation/client_src/internal/service/adapters/linux"
+	controller "implementation/client_src/internal/controller"
+	service "implementation/client_src/internal/service"
+	linux "implementation/client_src/internal/service/adapters/linux"
+	linux_adapter "implementation/client_src/pkg/adapter"
+	"implementation/client_src/pkg/repository"
+	ipv6service "implementation/client_src/pkg/service"
 	"log"
 )
 
 func main() {
-	adapter := linux2.NewLinuxAdapter()
-	demonProvider := linux2.NewSystemdProvider()
+	adapter := linux_adapter.NewLinuxAdapter()
+	demonProvider := linux.NewSystemdProvider()
 
-	connectService := service2.NewConnectionService(adapter, demonProvider)
-	ctrl := controller2.NewConnectionController(connectService)
+	connectService := service.NewConnectionService(adapter, demonProvider)
+	ctrl := controller.NewConnectionController(connectService)
 
 	repo := repository.NewFileRepository("")
 
-	filler := linux2.NewConfigFiller("config/templates")
-	configService := service2.NewConfigService(repo, filler, demonProvider)
+	filler := linux.NewConfigFiller("config/templates")
+	configService := service.NewConfigService(repo, filler, demonProvider)
 
-	ifaceService := service2.NewIfaceService()
-	listener := controller2.NewUnixSocketListener(ifaceService)
+	ifaceService := ipv6service.NewIfaceService()
+	listener := controller.NewUnixSocketListener(ifaceService)
 
 	clientCLI := cli.New(ctrl, configService, listener)
 	if err := clientCLI.Execute(); err != nil {

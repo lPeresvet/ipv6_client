@@ -2,7 +2,7 @@ package repository
 
 import (
 	"fmt"
-	"implementation/client_src/internal/domain/config"
+	"implementation/client_src/pkg/config"
 	"io"
 	"log"
 	"os"

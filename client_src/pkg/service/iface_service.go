@@ -8,7 +8,7 @@ import (
 	"implementation/client_src/internal/domain/connections"
 	"implementation/client_src/internal/domain/template"
 	"implementation/client_src/internal/parsers"
-	"implementation/client_src/internal/service/adapters/network"
+	"implementation/client_src/pkg/adapter"
 	"log"
 	"net"
 	"net/netip"
@@ -24,7 +24,7 @@ func NewIfaceService() *IfaceService {
 
 func (i *IfaceService) GetIpv6Address(interfaceName string) (string, error) {
 	for attempt := 0; attempt < 5; attempt++ {
-		info, err := network.GetTunnelInterfaceByName(interfaceName)
+		info, err := adapter.GetTunnelInterfaceByName(interfaceName)
 		if err != nil {
 			return "", err
 		}
@@ -90,14 +90,14 @@ func (i *IfaceService) StartNDPProcedure(ifaceName string) error {
 	}
 	defer c.Close()
 
-	if err := proceedROAndRA(c); err != nil {
+	if err := proceedRSAndRA(c); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func proceedROAndRA(c *ndp.Conn) error {
+func proceedRSAndRA(c *ndp.Conn) error {
 	m := &ndp.RouterSolicitation{
 		Options: []ndp.Option{},
 	}
