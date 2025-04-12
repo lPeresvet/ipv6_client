@@ -40,7 +40,7 @@ func (w *Watching) Execute(ctx context.Context) domain.State {
 		case <-time.After(5 * time.Second):
 			status, err := w.statusService.GetStatus(connection.InterfaceName)
 			if err != nil {
-				fmt.Printf("failed to get status for %s: %w", connection.InterfaceName, err)
+				fmt.Printf("failed to get status for %s: %v", connection.InterfaceName, err)
 
 				return domain.StateStopped
 			}

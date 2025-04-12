@@ -18,7 +18,7 @@ func NewStatusService() *StatusService {
 func (s *StatusService) GetStatus(interfaceName string) (domain.ConnectionStatus, error) {
 	ifaceInfo, err := adapter.GetTunnelInterfaceByName(interfaceName)
 	if err != nil {
-		return domain.Disconnected, err
+		return domain.Disconnected, nil
 	}
 
 	status := domain.TunnelUP
