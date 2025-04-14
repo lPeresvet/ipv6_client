@@ -106,8 +106,7 @@ func (c *WatcherController) handleConnection(ctx context.Context, conn net.Conn)
 		}
 
 		_, err = conn.Write([]byte(response))
-		if err != nil {
-			return
-		}
+
+		return
 	}
 }
