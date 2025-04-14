@@ -5,14 +5,16 @@ import (
 	"fmt"
 	fsm_states "implementation/connection_watcher/internal/controller/states"
 	"implementation/connection_watcher/internal/domain"
+	"sync"
 )
 
 type FSMStates map[domain.State]FSMState
 
 type FSM struct {
-	currentState domain.State
-
 	states FSMStates
+
+	mu           sync.Mutex
+	currentState domain.State
 }
 
 type Waiter interface {
@@ -62,6 +64,20 @@ func (fsm *FSM) Run(ctx context.Context) {
 		nextState := fsm.states[fsm.currentState].Execute(ctx)
 
 		fmt.Printf("Transit %q -> %q\n", fsm.currentState, nextState)
-		fsm.currentState = nextState
+		fsm.setState(nextState)
 	}
+}
+
+func (fsm *FSM) GetStatus() domain.State {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	return fsm.currentState
+}
+
+func (fsm *FSM) setState(state domain.State) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	fsm.currentState = state
 }

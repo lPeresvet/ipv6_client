@@ -13,4 +13,6 @@ const (
 	StateReconnectingIPv6 = "reconnecting_ipv6"
 	// StateStopped app is stopped by user
 	StateStopped = "stopped"
+	// StateUndefined state is undefined
+	StateUndefined = "undefined"
 )

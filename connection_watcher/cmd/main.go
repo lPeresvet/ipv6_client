@@ -6,6 +6,7 @@ import (
 	ipv6service "implementation/client_src/pkg/service"
 	"implementation/connection_watcher/internal/controller"
 	"implementation/connection_watcher/internal/service"
+	"log"
 )
 
 func main() {
@@ -19,5 +20,11 @@ func main() {
 
 	fsm := controller.NewFSM(waiter, statusService, connectionProvider, ipv6Service)
 
-	fsm.Run(ctx)
+	watcherController := controller.NewWatcherController(fsm)
+	watcherController.Start(ctx)
+
+	select {
+	case <-ctx.Done():
+		log.Println("[INFO] context canceled")
+	}
 }
