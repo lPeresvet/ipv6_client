@@ -25,11 +25,14 @@ var (
 type WatcherController struct {
 	fsm     FSMInterface
 	stopFSM func()
+
+	ch chan string
 }
 
-func NewWatcherController(fsm FSMInterface) *WatcherController {
+func NewWatcherController(fsm FSMInterface, ch chan string) *WatcherController {
 	return &WatcherController{
 		fsm: fsm,
+		ch:  ch,
 	}
 }
 
@@ -42,20 +45,22 @@ func (c *WatcherController) Start(ctx context.Context) error {
 	go func() {
 		if err := c.listenSocket(ctx); err != nil {
 			log.Printf("error listening socket: %v", err)
-		}
 
-		c.Stop(ctx)
+			c.Stop("defer stopped watcher")
+		}
 	}()
 
 	return nil
 }
 
-func (c *WatcherController) Stop(ctx context.Context) error {
+func (c *WatcherController) Stop(msg string) error {
 	if c.stopFSM != nil {
 		c.stopFSM()
 
 		return nil
 	}
+
+	c.ch <- msg
 
 	return fmt.Errorf("failed to stop controller: %w", ErrControllerNotStarted)
 }
@@ -109,7 +114,7 @@ func (c *WatcherController) handleConnection(ctx context.Context, conn net.Conn)
 		case string(domain_consts.GetStatus):
 			response = string(c.fsm.GetStatus())
 		case string(domain_consts.TurnOff):
-			c.stopFSM()
+			c.Stop("stopped watcher, get message")
 
 			response = domain_consts.OK
 		default:
