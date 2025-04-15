@@ -14,8 +14,9 @@ import (
 func main() {
 	adapter := linux_adapter.NewLinuxAdapter()
 	demonProvider := linux.NewSystemdProvider()
+	watcherProvider := linux.NewWatcherProvider()
 
-	connectService := service.NewConnectionService(adapter, demonProvider)
+	connectService := service.NewConnectionService(adapter, demonProvider, watcherProvider)
 	ctrl := controller.NewConnectionController(connectService)
 
 	repo := repository.NewFileRepository("")

@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"implementation/connection_watcher/internal/domain"
-	domain_consts "implementation/connection_watcher/pkg/domain"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
+
+	"implementation/connection_watcher/internal/domain"
+	domain_consts "implementation/connection_watcher/pkg/domain"
 )
 
 type FSMInterface interface {
@@ -46,7 +47,9 @@ func (c *WatcherController) Start(ctx context.Context) error {
 		if err := c.listenSocket(ctx); err != nil {
 			log.Printf("error listening socket: %v", err)
 
-			c.Stop("defer stopped watcher")
+			if err := c.Stop("defer stopped watcher"); err != nil {
+				c.ch <- err.Error()
+			}
 		}
 	}()
 
@@ -61,7 +64,7 @@ func (c *WatcherController) Stop(msg string) error {
 		return nil
 	}
 
-	return fmt.Errorf("failed to stop controller: %w", ErrControllerNotStarted)
+	return fmt.Errorf("%s: failed to stop controller: %w", msg, ErrControllerNotStarted)
 }
 
 func (c *WatcherController) listenSocket(ctx context.Context) error {
@@ -113,7 +116,12 @@ func (c *WatcherController) handleConnection(ctx context.Context, conn net.Conn)
 		case string(domain_consts.GetStatus):
 			response = string(c.fsm.GetStatus())
 		case string(domain_consts.TurnOff):
-			c.Stop("stopped watcher, get message")
+
+			if err := c.Stop("stopped watcher, get message"); err != nil {
+				c.ch <- err.Error()
+
+				return
+			}
 
 			response = domain_consts.OK
 		default:
