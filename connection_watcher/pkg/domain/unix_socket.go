@@ -15,6 +15,11 @@ type StatusSocketCommand string
 
 var (
 	GetStatus StatusSocketCommand = "GET_STATUS"
+	TurnOff   StatusSocketCommand = "TURN_OFF"
+)
+
+const (
+	OK = "ok"
 )
 
 var (

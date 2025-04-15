@@ -71,6 +71,13 @@ func (c *WatcherController) listenSocket(ctx context.Context) error {
 	defer listener.Close()
 
 	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("stopping controller socket: %s", listenPath)
+			return nil
+		default:
+		}
+
 		conn, err := listener.Accept()
 		if err != nil {
 			return fmt.Errorf("error on accept: %s", err)
@@ -101,6 +108,10 @@ func (c *WatcherController) handleConnection(ctx context.Context, conn net.Conn)
 		switch receivedData {
 		case string(domain_consts.GetStatus):
 			response = string(c.fsm.GetStatus())
+		case string(domain_consts.TurnOff):
+			c.stopFSM()
+
+			response = domain_consts.OK
 		default:
 			response = domain_consts.ErrorMessage
 		}

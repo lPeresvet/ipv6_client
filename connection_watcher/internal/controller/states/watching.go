@@ -31,6 +31,7 @@ func (w *Watching) Execute(ctx context.Context) domain.State {
 
 		return domain.StateStopped
 	}
+
 	for {
 		select {
 		case <-ctx.Done():
