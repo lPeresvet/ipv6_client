@@ -26,7 +26,7 @@ func (w *WatcherProvider) Start() error {
 }
 
 func (w *WatcherProvider) Stop() error {
-	addr := &net.UnixAddr{Name: domain_consts.WatcherSocketPath, Net: "unix"}
+	addr := &net.UnixAddr{Name: domain_consts.StatusSocketPath, Net: "unix"}
 
 	conn, err := net.DialUnix("unix", nil, addr)
 	if err != nil {
