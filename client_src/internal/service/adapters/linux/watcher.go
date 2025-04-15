@@ -18,7 +18,7 @@ func NewWatcherProvider() *WatcherProvider {
 }
 
 func (w *WatcherProvider) Start() error {
-	if err := exec.Command(watcherName).Run(); err != nil {
+	if err := exec.Command(watcherName).Start(); err != nil {
 		return fmt.Errorf("failed to start %s demon: %w", watcherName, err)
 	}
 
