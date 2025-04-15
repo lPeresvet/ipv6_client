@@ -56,11 +56,10 @@ func (c *WatcherController) Start(ctx context.Context) error {
 func (c *WatcherController) Stop(msg string) error {
 	if c.stopFSM != nil {
 		c.stopFSM()
+		c.ch <- msg
 
 		return nil
 	}
-
-	c.ch <- msg
 
 	return fmt.Errorf("failed to stop controller: %w", ErrControllerNotStarted)
 }
