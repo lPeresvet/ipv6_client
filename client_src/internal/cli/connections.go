@@ -60,7 +60,7 @@ func getConnectHandler(listener UnixSocketListener, connector Connector, usernam
 		defer cancel()
 		ch := make(chan *connections.IfaceEvent)
 		go func() {
-			if err := listener.ListenIpUp(ctx, ch); err != nil {
+			if err := listener.ListenIpUp(ctx, ch, *username); err != nil {
 				close(ch)
 				connector.TunnelDisconnect(*username)
 

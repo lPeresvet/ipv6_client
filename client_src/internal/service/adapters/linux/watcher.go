@@ -2,8 +2,8 @@ package linux
 
 import (
 	"fmt"
+	"implementation/client_src/pkg/adapter"
 	domain_consts "implementation/connection_watcher/pkg/domain"
-	"net"
 	"os/exec"
 )
 
@@ -26,20 +26,5 @@ func (w *WatcherProvider) Start() error {
 }
 
 func (w *WatcherProvider) Stop() error {
-	addr := &net.UnixAddr{Name: domain_consts.StatusSocketPath, Net: "unix"}
-
-	conn, err := net.DialUnix("unix", nil, addr)
-	if err != nil {
-		return fmt.Errorf("failed to dial unix socket: %w", err)
-	}
-	defer conn.Close()
-
-	message := domain_consts.TurnOff
-
-	_, err = conn.Write([]byte(message))
-	if err != nil {
-		return fmt.Errorf("failed to write to socket: %w", err)
-	}
-
-	return nil
+	return adapter.SendMessageToSocket(domain_consts.StatusSocketPath, string(domain_consts.TurnOff))
 }
