@@ -10,13 +10,12 @@ import (
 	"os"
 	"strings"
 
-	"implementation/connection_watcher/internal/domain"
 	domain_consts "implementation/connection_watcher/pkg/domain"
 )
 
 type FSMInterface interface {
 	Run(ctx context.Context)
-	GetStatus() domain.State
+	GetStatus() domain_consts.State
 }
 
 var (

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"implementation/connection_watcher/internal/domain"
+	domain_consts "implementation/connection_watcher/pkg/domain"
 	"log"
 	"time"
 )
@@ -24,12 +25,12 @@ func NewWatching(service StatusProvider, repo map[string]*domain.Connection) *Wa
 	}
 }
 
-func (w *Watching) Execute(ctx context.Context) domain.State {
+func (w *Watching) Execute(ctx context.Context) domain_consts.State {
 	connection, ok := w.repo["data"]
 	if !ok {
 		fmt.Println("data not found")
 
-		return domain.StateStopped
+		return domain_consts.StateStopped
 	}
 
 	for {
@@ -37,22 +38,22 @@ func (w *Watching) Execute(ctx context.Context) domain.State {
 		case <-ctx.Done():
 			fmt.Printf("Context done\n")
 
-			return domain.StateStopped
+			return domain_consts.StateStopped
 		case <-time.After(5 * time.Second):
 			status, err := w.statusService.GetStatus(connection.InterfaceName)
 			if err != nil {
 				fmt.Printf("failed to get status for %s: %v", connection.InterfaceName, err)
 
-				return domain.StateStopped
+				return domain_consts.StateStopped
 			}
 
 			log.Printf("%s is %s", connection.InterfaceName, status)
 
 			switch status {
 			case domain.Disconnected:
-				return domain.StateReconnectingTunnel
+				return domain_consts.StateReconnectingTunnel
 			case domain.TunnelUP:
-				return domain.StateReconnectingIPv6
+				return domain_consts.StateReconnectingIPv6
 			}
 		}
 	}

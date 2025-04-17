@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"implementation/connection_watcher/internal/domain"
+	domain_consts "implementation/connection_watcher/pkg/domain"
 )
 
 type Waiter interface {
@@ -22,7 +23,7 @@ func NewWaiting(waiter Waiter, repo map[string]*domain.Connection) *Waiting {
 	}
 }
 
-func (w *Waiting) Execute(ctx context.Context) domain.State {
+func (w *Waiting) Execute(ctx context.Context) domain_consts.State {
 	ch := make(chan *domain.Connection)
 	go func() {
 		fmt.Printf("Waiting for connections to be ready...\n")
@@ -43,14 +44,14 @@ func (w *Waiting) Execute(ctx context.Context) domain.State {
 		if info != nil {
 			w.repo["data"] = info
 
-			return domain.StateWatching
+			return domain_consts.StateWatching
 		} else {
-			return domain.StateStopped
+			return domain_consts.StateStopped
 		}
 
 	case <-ctx.Done():
 		fmt.Printf("Context done\n")
 
-		return domain.StateStopped
+		return domain_consts.StateStopped
 	}
 }

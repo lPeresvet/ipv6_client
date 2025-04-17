@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 	"implementation/client_src/internal/domain/connections"
+	"implementation/client_src/pkg/adapter"
+	"implementation/connection_watcher/pkg/domain"
 	"log"
 	"time"
 )
@@ -39,7 +41,17 @@ func NewConnectionService(provider ConnectionProvider, demonProvider DemonProvid
 }
 
 func (service *ConnectionService) Status() connections.ConnectionStatus {
-	return service.status
+	message, err := adapter.SendAndReceiveMessage(domain.StatusSocketPath, string(domain.GetStatus))
+	if err != nil {
+		return connections.DOWN
+	}
+
+	switch message {
+	case domain.StateWatching:
+		return connections.UP
+	}
+
+	return connections.DOWN
 }
 
 func (service *ConnectionService) StartConnection(username string) error {

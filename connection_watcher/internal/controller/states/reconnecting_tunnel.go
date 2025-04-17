@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"implementation/connection_watcher/internal/domain"
+	domain_consts "implementation/connection_watcher/pkg/domain"
 )
 
 type ReconnectingTunnel struct {
@@ -22,17 +23,17 @@ func NewReconnectingTunnel(service ConnectionProvider, repo map[string]*domain.C
 	}
 }
 
-func (r *ReconnectingTunnel) Execute(ctx context.Context) domain.State {
+func (r *ReconnectingTunnel) Execute(ctx context.Context) domain_consts.State {
 	connection, ok := r.repo["data"]
 	if !ok {
 		fmt.Println("connection data not found")
 
-		return domain.StateStopped
+		return domain_consts.StateStopped
 	}
 
 	if err := r.connectionService.Connect(connection.Username); err != nil {
-		return domain.StateStopped
+		return domain_consts.StateStopped
 	}
 
-	return domain.StateWatching
+	return domain_consts.StateWatching
 }

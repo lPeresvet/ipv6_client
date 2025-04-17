@@ -66,6 +66,7 @@ func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *c
 			if err != io.EOF {
 				log.Printf("Error on read: %s", err)
 			}
+
 			break
 		}
 
