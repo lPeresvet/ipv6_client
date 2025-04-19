@@ -18,11 +18,11 @@ func NewLoader(repository ConfigRepository) *Loader {
 	}
 }
 
-func (l *Loader) Load(configName string) (*config.Config, error) {
+func (l *Loader) Load(configName string) (*config.WatcherConfig, error) {
 	loadedConfig, err := l.configRepository.GetConfig(configName)
 	if err != nil {
-		return &config.Config{}, err
+		return &config.WatcherConfig{}, err
 	}
 
-	return loadedConfig, nil
+	return &loadedConfig.Watcher, nil
 }

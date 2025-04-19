@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"implementation/client_src/pkg/config"
 	fsm_states "implementation/connection_watcher/internal/controller/states"
 	"implementation/connection_watcher/internal/domain"
 	domain_consts "implementation/connection_watcher/pkg/domain"
@@ -13,6 +14,7 @@ type FSMStates map[domain_consts.State]FSMState
 
 type FSM struct {
 	states FSMStates
+	cfg    *config.WatcherConfig
 
 	mu           sync.Mutex
 	currentState domain_consts.State
@@ -39,6 +41,7 @@ type FSMState interface {
 }
 
 func NewFSM(
+	cfg *config.WatcherConfig,
 	waiter Waiter,
 	statusService StatusProvider,
 	connectionProvider ConnectionProvider,
@@ -47,13 +50,14 @@ func NewFSM(
 	connectionInfoRepo := make(map[string]*domain.Connection)
 
 	states := map[domain_consts.State]FSMState{
-		domain_consts.StateWaiting:            fsm_states.NewWaiting(waiter, connectionInfoRepo),
-		domain_consts.StateWatching:           fsm_states.NewWatching(statusService, connectionInfoRepo),
+		domain_consts.StateWaiting:            fsm_states.NewWaiting(cfg, waiter, connectionInfoRepo),
+		domain_consts.StateWatching:           fsm_states.NewWatching(cfg, statusService, connectionInfoRepo),
 		domain_consts.StateReconnectingTunnel: fsm_states.NewReconnectingTunnel(connectionProvider, connectionInfoRepo),
 		domain_consts.StateReconnectingIPv6:   fsm_states.NewReconnectingIPv6(ipv6Service, connectionInfoRepo),
 	}
 
 	return &FSM{
+		cfg:          cfg,
 		currentState: domain_consts.StateWaiting,
 		states:       states,
 	}

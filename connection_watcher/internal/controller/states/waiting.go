@@ -3,8 +3,10 @@ package states
 import (
 	"context"
 	"fmt"
+	"implementation/client_src/pkg/config"
 	"implementation/connection_watcher/internal/domain"
 	domain_consts "implementation/connection_watcher/pkg/domain"
+	"time"
 )
 
 type Waiter interface {
@@ -12,12 +14,15 @@ type Waiter interface {
 }
 
 type Waiting struct {
+	cfg *config.WatcherConfig
+
 	waitService Waiter
 	repo        map[string]*domain.Connection
 }
 
-func NewWaiting(waiter Waiter, repo map[string]*domain.Connection) *Waiting {
+func NewWaiting(cfg *config.WatcherConfig, waiter Waiter, repo map[string]*domain.Connection) *Waiting {
 	return &Waiting{
+		cfg:         cfg,
 		waitService: waiter,
 		repo:        repo,
 	}
@@ -48,7 +53,10 @@ func (w *Waiting) Execute(ctx context.Context) domain_consts.State {
 		} else {
 			return domain_consts.StateStopped
 		}
+	case <-time.After(time.Duration(w.cfg.Reconnect.WaitingTimeout) * time.Second):
+		fmt.Printf("Timeout waiting for connections to be ready...\n")
 
+		return domain_consts.StateStopped
 	case <-ctx.Done():
 		fmt.Printf("Context done\n")
 

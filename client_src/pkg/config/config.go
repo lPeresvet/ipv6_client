@@ -20,6 +20,6 @@ type WatcherConfig struct {
 }
 
 type ReconnectConfig struct {
-	Timeout int `yaml:"timeout"`
-	Retries int `yaml:"retries"`
+	WaitingTimeout int `yaml:"waiting_timeout" default:"5"`
+	WatchingPeriod int `yaml:"watching_period" default:"5"`
 }
