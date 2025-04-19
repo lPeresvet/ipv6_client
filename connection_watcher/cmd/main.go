@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"golang.org/x/net/context"
 	"implementation/client_src/pkg/adapter"
 	"implementation/client_src/pkg/repository"
@@ -25,6 +26,8 @@ func main() {
 	loader := config.NewLoader(repo)
 
 	cfg, err := loader.Load("config/config-example.yaml")
+
+	fmt.Println(cfg)
 
 	if err != nil {
 		log.Fatalf("Failed to load config: %s", err)
