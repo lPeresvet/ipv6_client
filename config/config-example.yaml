@@ -10,3 +10,7 @@ servers:
     users:
       - username: "username8"
         password: "qwerty444"
+
+reconnect:
+  waiting_timeout: 5
+  watching_period: 5
