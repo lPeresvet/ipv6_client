@@ -24,5 +24,13 @@ func (l *Loader) Load(configName string) (*config.WatcherConfig, error) {
 		return &config.WatcherConfig{}, err
 	}
 
+	if loadedConfig.Watcher.Reconnect.WaitingTimeout == 0 {
+		loadedConfig.Watcher.Reconnect.WaitingTimeout = 5
+	}
+
+	if loadedConfig.Watcher.Reconnect.WatchingPeriod == 0 {
+		loadedConfig.Watcher.Reconnect.WatchingPeriod = 5
+	}
+
 	return &loadedConfig.Watcher, nil
 }
