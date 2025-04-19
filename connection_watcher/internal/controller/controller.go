@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"implementation/connection_watcher/internal/domain"
-	domain_consts "implementation/connection_watcher/pkg/domain"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
+
+	domain_consts "implementation/connection_watcher/pkg/domain"
 )
 
 type FSMInterface interface {
 	Run(ctx context.Context)
-	GetStatus() domain.State
+	GetStatus() domain_consts.State
 }
 
 var (
@@ -25,11 +25,14 @@ var (
 type WatcherController struct {
 	fsm     FSMInterface
 	stopFSM func()
+
+	ch chan string
 }
 
-func NewWatcherController(fsm FSMInterface) *WatcherController {
+func NewWatcherController(fsm FSMInterface, ch chan string) *WatcherController {
 	return &WatcherController{
 		fsm: fsm,
+		ch:  ch,
 	}
 }
 
@@ -42,22 +45,25 @@ func (c *WatcherController) Start(ctx context.Context) error {
 	go func() {
 		if err := c.listenSocket(ctx); err != nil {
 			log.Printf("error listening socket: %v", err)
-		}
 
-		c.Stop(ctx)
+			if err := c.Stop("defer stopped watcher"); err != nil {
+				c.ch <- err.Error()
+			}
+		}
 	}()
 
 	return nil
 }
 
-func (c *WatcherController) Stop(ctx context.Context) error {
+func (c *WatcherController) Stop(msg string) error {
 	if c.stopFSM != nil {
 		c.stopFSM()
+		c.ch <- msg
 
 		return nil
 	}
 
-	return fmt.Errorf("failed to stop controller: %w", ErrControllerNotStarted)
+	return fmt.Errorf("%s: failed to stop controller: %w", msg, ErrControllerNotStarted)
 }
 
 func (c *WatcherController) listenSocket(ctx context.Context) error {
@@ -71,6 +77,13 @@ func (c *WatcherController) listenSocket(ctx context.Context) error {
 	defer listener.Close()
 
 	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("stopping controller socket: %s", listenPath)
+			return nil
+		default:
+		}
+
 		conn, err := listener.Accept()
 		if err != nil {
 			return fmt.Errorf("error on accept: %s", err)
@@ -101,6 +114,15 @@ func (c *WatcherController) handleConnection(ctx context.Context, conn net.Conn)
 		switch receivedData {
 		case string(domain_consts.GetStatus):
 			response = string(c.fsm.GetStatus())
+		case string(domain_consts.TurnOff):
+
+			if err := c.Stop("stopped watcher, get message"); err != nil {
+				c.ch <- err.Error()
+
+				return
+			}
+
+			response = domain_consts.OK
 		default:
 			response = domain_consts.ErrorMessage
 		}

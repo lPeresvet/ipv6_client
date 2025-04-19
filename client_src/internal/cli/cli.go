@@ -15,7 +15,7 @@ type ClientController interface {
 }
 
 type UnixSocketListener interface {
-	ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent) error
+	ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent, username string) error
 }
 
 func New(controller ClientController, filler ConfigFiller, listener UnixSocketListener) *CLI {

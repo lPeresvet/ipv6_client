@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 	"implementation/client_src/internal/domain/connections"
+	"implementation/client_src/pkg/adapter"
+	"implementation/connection_watcher/pkg/domain"
 	"log"
 	"time"
 )
@@ -17,25 +19,46 @@ type DemonProvider interface {
 	StopDemon(demonName string) error
 	DemonStatus(demonName string) (*connections.DemonInfo, error)
 }
+
+type WatcherProvider interface {
+	Start() error
+	Stop() error
+}
 type ConnectionService struct {
 	status             connections.ConnectionStatus
 	connectionProvider ConnectionProvider
 	demonProvider      DemonProvider
+	watcherProvider    WatcherProvider
 }
 
-func NewConnectionService(provider ConnectionProvider, demonProvider DemonProvider) *ConnectionService {
+func NewConnectionService(provider ConnectionProvider, demonProvider DemonProvider, watcherProvider WatcherProvider) *ConnectionService {
 	return &ConnectionService{
 		status:             connections.DOWN,
 		connectionProvider: provider,
 		demonProvider:      demonProvider,
+		watcherProvider:    watcherProvider,
 	}
 }
 
 func (service *ConnectionService) Status() connections.ConnectionStatus {
-	return service.status
+	message, err := adapter.SendAndReceiveMessage(domain.StatusSocketPath, string(domain.GetStatus))
+	if err != nil {
+		return connections.DOWN
+	}
+
+	switch message {
+	case domain.StateWatching:
+		return connections.UP
+	}
+
+	return connections.DOWN
 }
 
 func (service *ConnectionService) StartConnection(username string) error {
+	if err := service.watcherProvider.Start(); err != nil {
+		return err
+	}
+
 	if err := service.connectionProvider.Connect(username); err != nil {
 		service.status = connections.DOWN
 
@@ -48,6 +71,10 @@ func (service *ConnectionService) StartConnection(username string) error {
 }
 
 func (service *ConnectionService) TerminateConnection(username string) error {
+	if err := service.watcherProvider.Stop(); err != nil {
+		return err
+	}
+
 	if err := service.connectionProvider.Disconnect(username); err != nil {
 		service.status = connections.UP
 

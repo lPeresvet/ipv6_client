@@ -1,10 +1,10 @@
 package connections
 
-type ConnectionStatus bool
+type ConnectionStatus string
 
 const (
-	UP   ConnectionStatus = true
-	DOWN ConnectionStatus = false
+	UP   ConnectionStatus = "UP"
+	DOWN ConnectionStatus = "DOWN"
 )
 
 type DemonInfo struct {

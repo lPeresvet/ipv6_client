@@ -5,6 +5,8 @@ import (
 	"golang.org/x/net/context"
 	"implementation/client_src/internal/domain/config"
 	"implementation/client_src/internal/domain/connections"
+	"implementation/client_src/pkg/adapter"
+	"implementation/connection_watcher/pkg/domain"
 	"io"
 	"log"
 	"net"
@@ -26,7 +28,7 @@ func NewUnixSocketListener(ifaceService InterfaceService) *UnixSocketListener {
 	return &UnixSocketListener{InterfaceService: ifaceService}
 }
 
-func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent) error {
+func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *connections.IfaceEvent, username string) error {
 	if err := l.InterfaceService.PrepareIpUpScript(); err != nil {
 		return fmt.Errorf("failed to prepare ip up script: %w", err)
 	}
@@ -44,7 +46,7 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 			log.Fatalf("Error on accept: %s", err)
 		}
 
-		if err := l.HandleConnection(ctx, control, conn); err != nil {
+		if err := l.HandleConnection(ctx, control, conn, username); err != nil {
 			return err
 		}
 
@@ -55,7 +57,7 @@ func (l *UnixSocketListener) ListenIpUp(ctx context.Context, control chan *conne
 	}
 }
 
-func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *connections.IfaceEvent, c net.Conn) error {
+func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *connections.IfaceEvent, c net.Conn, username string) error {
 	received := make([]byte, 0)
 	for {
 		buf := make([]byte, 512)
@@ -64,12 +66,13 @@ func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *c
 			if err != io.EOF {
 				log.Printf("Error on read: %s", err)
 			}
+
 			break
 		}
 
 		received = append(received, buf[:count]...)
 
-		if err := l.proceedIncomingUnixMessage(control, string(received)); err != nil {
+		if err := l.proceedIncomingUnixMessage(control, string(received), username); err != nil {
 			return err
 		}
 	}
@@ -77,7 +80,7 @@ func (l *UnixSocketListener) HandleConnection(_ context.Context, control chan *c
 	return nil
 }
 
-func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connections.IfaceEvent, message string) error {
+func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connections.IfaceEvent, message, username string) error {
 	log.Printf("Proceed incoming unix message: %s", message)
 
 	command := strings.Split(message, " ")
@@ -88,6 +91,12 @@ func (l *UnixSocketListener) proceedIncomingUnixMessage(control chan *connection
 
 	if command[0] == connections.IfaceUpCommand {
 		log.Printf("Received %s event", connections.IfaceUpCommand)
+
+		outMsg := fmt.Sprintf("%s %s %s", domain.IfaceUP, command[1], username)
+
+		if err := adapter.SendMessageToSocket(domain.WatcherSocketPath, outMsg); err != nil {
+			log.Printf("Error sending message to socket: %s", err)
+		}
 
 		if err := l.InterfaceService.StartNDPProcedure(strings.Trim(command[1], "\n")); err != nil {
 			return fmt.Errorf("failed to start NDP procedure: %w", err)

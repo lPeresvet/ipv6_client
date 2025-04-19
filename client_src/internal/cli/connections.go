@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"implementation/client_src/internal/domain/connections"
@@ -18,6 +19,7 @@ type ConnectionsCmd struct {
 type Connector interface {
 	TunnelConnect(username string) error
 	TunnelDisconnect(username string) error
+	TunnelStatus() connections.ConnectionStatus
 }
 
 func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSocketListener) *ConnectionsCmd {
@@ -36,6 +38,13 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 		Use:   "disconnect",
 		Short: "Disconnect from ipv6 prefix provider.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			switch connector.TunnelStatus() {
+			case connections.DOWN:
+				fmt.Println("Tunnel is already Disconnected")
+
+				return nil
+			}
+
 			return connector.TunnelDisconnect(username)
 		},
 	}
@@ -56,11 +65,18 @@ func NewConnectCmd(baseCmd *cobra.Command, connector Connector, listener UnixSoc
 
 func getConnectHandler(listener UnixSocketListener, connector Connector, username *string) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		switch connector.TunnelStatus() {
+		case connections.UP:
+			fmt.Println("Tunnel is already Connected")
+
+			return nil
+		}
+
 		ctx, cancel := context.WithCancel(cmd.Context())
 		defer cancel()
 		ch := make(chan *connections.IfaceEvent)
 		go func() {
-			if err := listener.ListenIpUp(ctx, ch); err != nil {
+			if err := listener.ListenIpUp(ctx, ch, *username); err != nil {
 				close(ch)
 				connector.TunnelDisconnect(*username)
 

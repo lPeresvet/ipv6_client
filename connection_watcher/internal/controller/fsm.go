@@ -5,16 +5,17 @@ import (
 	"fmt"
 	fsm_states "implementation/connection_watcher/internal/controller/states"
 	"implementation/connection_watcher/internal/domain"
+	domain_consts "implementation/connection_watcher/pkg/domain"
 	"sync"
 )
 
-type FSMStates map[domain.State]FSMState
+type FSMStates map[domain_consts.State]FSMState
 
 type FSM struct {
 	states FSMStates
 
 	mu           sync.Mutex
-	currentState domain.State
+	currentState domain_consts.State
 }
 
 type Waiter interface {
@@ -34,7 +35,7 @@ type IPv6Service interface {
 }
 
 type FSMState interface {
-	Execute(ctx context.Context) domain.State
+	Execute(ctx context.Context) domain_consts.State
 }
 
 func NewFSM(
@@ -45,21 +46,21 @@ func NewFSM(
 ) *FSM {
 	connectionInfoRepo := make(map[string]*domain.Connection)
 
-	states := map[domain.State]FSMState{
-		domain.StateWaiting:            fsm_states.NewWaiting(waiter, connectionInfoRepo),
-		domain.StateWatching:           fsm_states.NewWatching(statusService, connectionInfoRepo),
-		domain.StateReconnectingTunnel: fsm_states.NewReconnectingTunnel(connectionProvider, connectionInfoRepo),
-		domain.StateReconnectingIPv6:   fsm_states.NewReconnectingIPv6(ipv6Service, connectionInfoRepo),
+	states := map[domain_consts.State]FSMState{
+		domain_consts.StateWaiting:            fsm_states.NewWaiting(waiter, connectionInfoRepo),
+		domain_consts.StateWatching:           fsm_states.NewWatching(statusService, connectionInfoRepo),
+		domain_consts.StateReconnectingTunnel: fsm_states.NewReconnectingTunnel(connectionProvider, connectionInfoRepo),
+		domain_consts.StateReconnectingIPv6:   fsm_states.NewReconnectingIPv6(ipv6Service, connectionInfoRepo),
 	}
 
 	return &FSM{
-		currentState: domain.StateWaiting,
+		currentState: domain_consts.StateWaiting,
 		states:       states,
 	}
 }
 
 func (fsm *FSM) Run(ctx context.Context) {
-	for fsm.currentState != domain.StateStopped {
+	for fsm.currentState != domain_consts.StateStopped {
 		fmt.Println(fsm.currentState)
 		nextState := fsm.states[fsm.currentState].Execute(ctx)
 
@@ -68,14 +69,14 @@ func (fsm *FSM) Run(ctx context.Context) {
 	}
 }
 
-func (fsm *FSM) GetStatus() domain.State {
+func (fsm *FSM) GetStatus() domain_consts.State {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
 	return fsm.currentState
 }
 
-func (fsm *FSM) setState(state domain.State) {
+func (fsm *FSM) setState(state domain_consts.State) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 

@@ -20,11 +20,13 @@ func main() {
 
 	fsm := controller.NewFSM(waiter, statusService, connectionProvider, ipv6Service)
 
-	watcherController := controller.NewWatcherController(fsm)
+	exitStatus := make(chan string)
+
+	watcherController := controller.NewWatcherController(fsm, exitStatus)
 	watcherController.Start(ctx)
 
 	select {
-	case <-ctx.Done():
-		log.Println("[INFO] context canceled")
+	case msg := <-exitStatus:
+		log.Println("[INFO] context canceled: ", msg)
 	}
 }
